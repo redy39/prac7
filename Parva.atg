@@ -128,52 +128,51 @@ IGNORE CHR(9) .. CHR(13)
 PRODUCTIONS
 
   Parva
-                             (. CodeGen.FrameHeader();
-					     // no arguments
-                                CodeGen.Call(mainEntryPoint);
-						// forward, incomplete
-                                CodeGen.LeaveProgram(); .)     						// return to O/S
-  = {   FuncDeclaration } EOF  (. if 
-						(!mainEntryPoint.IsDefined())
-                         SemError("missing Main function"); progState = 1; .)
+                                             (. CodeGen.FrameHeader();
+                                                // no arguments
+                                                CodeGen.Call(mainEntryPoint);
+                                                // forward, incomplete
+                                                CodeGen.LeaveProgram(); .)     // return to O/S
+  = {   FuncDeclaration } EOF                (. if(!mainEntryPoint.IsDefined())
+                                                  SemError("missing Main function"); progState = 1; .)
   .
 
   FuncDeclaration      
                        (. StackFrame frame = new StackFrame();
                           Entry function = new Entry(); .)
   =  "void" Ident<out function.name>  
-					(. function.kind = Kinds.Fun;
-                              function.type = Types.voidType;
-                              function.nParams = 0;
-                              function.firstParam = null;
-	                  function.entryPoint = new Label(known);
-                              Table.Insert(function);
-                              Table.OpenScope(); .)
-     "(" FormalParameters<function> ")"      
-				(. frame.size = CodeGen.headerSize + 
-					function.nParams;
-                   if (function.name.ToUpper().Equals("MAIN")
-                       && !mainEntryPoint.IsDefined()
-                       && function.nParams == 0) {
-                           mainEntryPoint.Here(); } .)
-     Body<frame>              (. Table.CloseScope(); .)
+                                             (. function.kind = Kinds.Fun;
+                                                function.type = Types.voidType;
+                                                function.nParams = 0;
+                                                function.firstParam = null;
+                                                function.entryPoint = new Label(known);
+                                                Table.Insert(function);
+                                                Table.OpenScope(); .)
+     "(" FormalParameters<function> ")"
+                                             (. frame.size = CodeGen.headerSize + 
+                                                function.nParams;
+                                                if (function.name.ToUpper().Equals("MAIN")
+                                                && !mainEntryPoint.IsDefined()
+                                                && function.nParams == 0) {
+                                                  mainEntryPoint.Here(); } .)
+     Body<frame>                             (. Table.CloseScope(); .)
   .
 
-  FormalParameters<Entry func>  (. Entry param; .)
-  = [ OneParam<out param, func> (. func.firstParam = param; .)
+  FormalParameters<Entry func>               (. Entry param; .)
+  = [ OneParam<out param, func>              (. func.firstParam = param; .)
       { WEAK "," OneParam<out param, func> }
     ] .
 
   OneParam<out Entry param, Entry func>
-					(. param = new Entry();
-                             param.kind = Kinds.Var;
-           param.offset = CodeGen.headerSize + func.nParams;
-                             func.nParams++; .)
+                                             (. param = new Entry();
+                                                param.kind = Kinds.Var;
+                                                param.offset = CodeGen.headerSize + func.nParams;
+                                                func.nParams++; .)
   =  Type<out param.type>
-     Ident<out param.name>         (. Table.Insert(param); .)
+     Ident<out param.name>                   (. Table.Insert(param); .)
   .
 
-  Body<StackFrame frame>       (. Label DSPLabel = new Label(known);
+  Body<StackFrame frame>                     (. Label DSPLabel = new Label(known);
                                                 int sizeMark = frame.size;
                                                 CodeGen.OpenStackFrame(0); .)
   =  "{" { Statement<frame> }
@@ -254,7 +253,7 @@ PRODUCTIONS
      [ AssignOp                              (. CodeGen.LoadAddress(var); .)
        Expression<out expType>               (. if (!Assignable(var.type, expType))
                                                   SemError("incompatible types in assignment");
-												  progState = 1;
+                                                progState = 1;
                                                 CodeGen.Assign(var.type); .)
      ]                                       (. Table.Insert(var); .)
   .
@@ -267,11 +266,11 @@ PRODUCTIONS
          "(" Arguments<des> ")"              (. CodeGen.Call(des.entry.entryPoint); .)
       |  Designator<out des>                 (. if (des.entry.kind != Kinds.Var)
                                                   SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]); 
-												  progState = 1; .)
+                                                progState = 1; .)
          AssignOp
          Expression<out expType>             (. if (!Assignable(des.type, expType))
-                                                SemError("incompatible types in assignment");
-												progState = 1;
+                                                  SemError("incompatible types in assignment");
+                                                progState = 1;
                                                 CodeGen.Assign(des.type); .)
      ) WEAK ";"
   .
@@ -283,13 +282,13 @@ PRODUCTIONS
        }
      ]                                       (. if (argCount != des.entry.nParams)
                                                   SemError("wrong number of arguments"); 
-												  progState = 1; .)
+                                                progState = 1; .)
   .
 
   OneArg<Entry fp>                           (. int argType; .)
   =  (  Expression<out argType>              (. if (fp != null && !Assignable(fp.type, argType))
-                                                    SemError("argument type mismatch"); 
-													progState = 1; .)
+                                                  SemError("argument type mismatch"); 
+                                                progState = 1; .)
      )
   .
 
@@ -298,20 +297,20 @@ PRODUCTIONS
   =  Ident<out name>                         (. Entry entry = Table.Find(name);
                                                 if (!entry.declared)
                                                   SemError("undeclared identifier");
-												  progState = 1;
+                                                progState = 1;
                                                 des = new DesType(entry);
                                                 if (entry.kind == Kinds.Var)
                                                   CodeGen.LoadAddress(entry); .)
      [     "["                               (. if (IsArray(des.type)) des.type--;
                                                 else { SemError("unexpected subscript");
-											         progState = 1; }
+                                                  progState = 1; }
                                                 if (des.entry.kind != Kinds.Var) {
                                                   SemError("unexpected subscript");
-												  progState = 1; }
+                                                  progState = 1; }
                                                 CodeGen.Dereference(); .)
               Expression<out indexType>      (. if (!IsArith(indexType)) {
                                                   SemError("invalid subscript type");
-												  progState = 1; }
+                                                progState = 1; }
                                                 CodeGen.Index(); .)
 
            "]"
@@ -321,7 +320,7 @@ PRODUCTIONS
   IfStatement<StackFrame frame>
                                              (. Label falseLabel = new Label(!known); .)
   =  "if" "(" Condition ")"                  (. CodeGen.BranchFalse(falseLabel); .)
-        Statement<frame>           (. falseLabel.Here(); .)
+        Statement<frame>                     (. falseLabel.Here(); .)
   .
 
 
@@ -329,18 +328,18 @@ PRODUCTIONS
                                              (. Label loopExit  = new Label(!known);
                                                 Label loopStart = new Label(known); .)
   =  "while" "(" Condition ")"               (. CodeGen.BranchFalse(loopExit); .)
-     Statement<frame>              	     (. CodeGen.Branch(loopStart);
+     Statement<frame>              	         (. CodeGen.Branch(loopStart);
                                                 loopExit.Here(); .)
   .
 
   HaltStatement<int progState>
-  =  "halt"                                 (. CodeGen.LeaveProgram(); 
+  =  "halt"                                  (. CodeGen.LeaveProgram(); 
                                                Console.WriteLine("program ended with the code: " + progState); .)
      WEAK ";"
   .
 
   ReturnStatement              
-  =  "return"				(. CodeGen.LeaveVoidFunction(); .)
+  =  "return"                                (. CodeGen.LeaveVoidFunction(); .)
     WEAK ";"
   .
 
@@ -360,7 +359,7 @@ PRODUCTIONS
   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
     | Designator<out des>                    (. if (des.entry.kind != Kinds.Var) {
                                                   SemError("wrong kind of identifier");
-												  progState = 1; }
+                                                  progState = 1; }
                                                 switch (des.type) {
                                                   case Types.intType:
                                                   case Types.boolType:
@@ -414,7 +413,7 @@ PRODUCTIONS
                                                 }
                                                 if (!comparable) {
                                                   SemError("incomparable operands");
-												  progState = 1; }
+                                                  progState = 1; }
                                                 type = Types.boolType; CodeGen.Comparison(op); .)
      ]
   .
@@ -425,10 +424,10 @@ PRODUCTIONS
   =                                          (. type = Types.noType; .)
      (   "+" Term<out type>                  (. if (!IsArith(type)) {
                                                   SemError("arithmetic operand needed"); 
-												  progState = 1; } .)
+                                                  progState = 1; } .)
        | "-" Term<out type>                  (. if (!IsArith(type)) {
                                                   SemError("arithmetic operand needed");
-												  progState = 1; }
+                                                  progState = 1; }
                                                 CodeGen.NegateInteger(); .)
        | Term<out type>
      )
@@ -438,14 +437,14 @@ PRODUCTIONS
                                                   case CodeGen.or:
                                                     if (!IsBool(type) || !IsBool(type2)) {
                                                       SemError("boolean operands needed"); 
-													  progState = 1; }
+                                                      progState = 1; }
                                                     type = Types.boolType;
                                                     break;
                                                   default:
                                                     if (!IsArith(type) || !IsArith(type2)) {
                                                       SemError("arithmetic operands needed");
                                                       type = Types.noType;
-													  progState = 1;
+                                                      progState = 1;
                                                     }
                                                     CodeGen.BinaryOp(op);
                                                     break;
@@ -469,7 +468,7 @@ PRODUCTIONS
                                                     if (!IsArith(type) || !IsArith(type2)) {
                                                       SemError("arithmetic operands needed");
                                                       type = Types.noType;
-													  progState = 1;
+                                                      progState = 1;
                                                     }
                                                     CodeGen.BinaryOp(op);
                                                     break;
@@ -481,8 +480,8 @@ PRODUCTIONS
                                                 int size;
                                                 DesType des;
                                                 ConstRec con; .)
-  =    Designator<out des>                 (. type = des.type;
-                                              switch (des.entry.kind) {
+  =    Designator<out des>                   (. type = des.type;
+                                                switch (des.entry.kind) {
                                                   case Kinds.Var:
                                                     CodeGen.Dereference();
                                                     break;
@@ -491,7 +490,7 @@ PRODUCTIONS
                                                     break;
                                                   default:
                                                     SemError("wrong kind of identifier");
-													progState = 1;
+                                                    progState = 1;
                                                     break;
                                                 } .)
                                         
@@ -500,7 +499,7 @@ PRODUCTIONS
      | "new" BasicType<out type>             (. type++; .)
          "[" Expression<out size>            (. if (!IsArith(size)){
                                                   SemError("array size must be integer");
-												  progState = 1; }
+                                                  progState = 1; }
                                                 CodeGen.Allocate(); .)
          "]"
      | "!" Factor<out type>                  (. if (!IsBool(type)) { SemError("boolean operand needed"); progState = 1; } 

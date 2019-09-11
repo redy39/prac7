@@ -19,7 +19,7 @@ namespace Parva {
     }
 
     public static void Main (string[] args) {
-      bool mergeErrors = false, execution = true, immediate = false;
+      bool mergeErrors = false, execution = true, immediate = false, codeOut = false;
       string inputName = null;
 
       // ------------------------ process command line parameters:
@@ -31,6 +31,7 @@ namespace Parva {
         else if (args[i].ToLower().Equals("-d")) Parser.debug = true;
         else if (args[i].ToLower().Equals("-n")) execution = false;
         else if (args[i].ToLower().Equals("-g")) immediate = true;
+        else if (args[i].ToLower().Equals("-c")) codeOut = true;
         else inputName = args[i];
       }
       if (inputName == null) {
@@ -56,6 +57,7 @@ namespace Parva {
 
       // ------------------------ compilation
 
+      if (!codeOut) CodeGen.Disable();
       Parser.Parse();
       Errors.Summarize();
 

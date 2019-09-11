@@ -67,6 +67,8 @@ public class Parser {
 	public const int StackDump_Sym = 48;
 	public const int HeapDump_Sym = 49;
 	public const int TableDump_Sym = 50;
+	public const int CodeGenOn_Sym = 51;
+	public const int CodeGenOff_Sym = 52;
 
 	public const int maxT = 45;
 	public const int _DebugOn = 46;
@@ -74,6 +76,8 @@ public class Parser {
 	public const int _StackDump = 48;
 	public const int _HeapDump = 49;
 	public const int _TableDump = 50;
+	public const int _CodeGenOn = 51;
+	public const int _CodeGenOff = 52;
 
 	const bool T = true;
 	const bool x = false;
@@ -222,6 +226,12 @@ public class Parser {
 				}
 				if (la.kind == TableDump_Sym) {
 				Table.PrintTable(OutFile.StdOut);
+				}
+				if (la.kind == CodeGenOn_Sym) {
+				CodeGen.Enable();
+				}
+				if (la.kind == CodeGenOff_Sym) {
+				CodeGen.Disable();
 				}
 
 			la = token; /* pdt */
@@ -389,6 +399,7 @@ public class Parser {
 		}
 		case semicolon_Sym: {
 			Get();
+			Warning("possible unintended empty statement");
 			break;
 		}
 		default: SynErr(47); break;
@@ -397,11 +408,14 @@ public class Parser {
 
 	static void Block(StackFrame frame) {
 		Table.OpenScope();
+		bool empty = true;
 		Expect(lbrace_Sym);
 		while (StartOf(3)) {
 			Statement(frame);
 		}
+		empty = false;
 		ExpectWeak(rbrace_Sym, 6);
+		if (empty) Warning("possible unintended empty block");
 		Table.CloseScope();
 	}
 

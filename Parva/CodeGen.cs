@@ -71,6 +71,14 @@ namespace Parva {
       cgt  = 13,
       cle  = 14;
 
+    public static void Disable() {
+        generatingCode = false;
+    }
+
+    public static void Enable() {
+        generatingCode = true;
+    }
+
     private static void Emit(int word) {
     // Code generator for single word
       if (!generatingCode) return;

@@ -13,9 +13,7 @@ COMPILER Parva $NC
     debug    = false,
     listCode = false,
     warnings = true;
-	
   static int progState = 0;
-  
   const bool
     known = true;
 
@@ -177,8 +175,7 @@ PRODUCTIONS
                                                 CodeGen.OpenStackFrame(0); .)
   =  "{" { Statement<frame> }
      WEAK "}"                                (. CodeGen.FixDSP(DSPLabel.Address(), frame.size - sizeMark);
-                                                CodeGen.LeaveVoidFunction();
-                                              .) 
+                                                CodeGen.LeaveVoidFunction(); .)
 .
 
   Statement<StackFrame frame>
@@ -188,7 +185,7 @@ PRODUCTIONS
             | AssignmentOrCall
             | IfStatement<frame>
             | WhileStatement<frame>
-            | HaltStatement<progState>
+            | HaltStatement
             | ReturnStatement
             | ReadStatement
             | WriteStatement
@@ -332,9 +329,13 @@ PRODUCTIONS
                                                 loopExit.Here(); .)
   .
 
-  HaltStatement<int progState>
-  =  "halt"                                  (. CodeGen.LeaveProgram(); 
-                                               Console.WriteLine("program ended with the code: " + progState); .)
+  HaltStatement
+  =  "halt"
+     [
+     "(" 
+     [ WriteList ]
+     ")"
+     ]                                       (. CodeGen.LeaveProgram(); .)
      WEAK ";"
   .
 

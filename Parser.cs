@@ -87,9 +87,7 @@ public class Parser {
     debug    = false,
     listCode = false,
     warnings = true;
-	
   static int progState = 0;
-
   const bool
     known = true;
 
@@ -270,9 +268,8 @@ public class Parser {
 			FuncDeclaration();
 		}
 		Expect(EOF_SYM);
-		if
-		(!mainEntryPoint.IsDefined())
-		SemError("missing Main function"); progState = 1;
+		if(!mainEntryPoint.IsDefined())
+		  SemError("missing Main function"); progState = 1;
 	}
 
 	static void FuncDeclaration() {
@@ -281,21 +278,21 @@ public class Parser {
 		Expect(void_Sym);
 		Ident(out function.name);
 		function.kind = Kinds.Fun;
-		                      function.type = Types.voidType;
-		                      function.nParams = 0;
-		                      function.firstParam = null;
-		           function.entryPoint = new Label(known);
-		                      Table.Insert(function);
-		                      Table.OpenScope();
+		function.type = Types.voidType;
+		function.nParams = 0;
+		function.firstParam = null;
+		function.entryPoint = new Label(known);
+		Table.Insert(function);
+		Table.OpenScope();
 		Expect(lparen_Sym);
 		FormalParameters(function);
 		Expect(rparen_Sym);
 		frame.size = CodeGen.headerSize +
 		function.nParams;
-		            if (function.name.ToUpper().Equals("MAIN")
-		                && !mainEntryPoint.IsDefined()
-		                && function.nParams == 0) {
-		                    mainEntryPoint.Here(); }
+		if (function.name.ToUpper().Equals("MAIN")
+		&& !mainEntryPoint.IsDefined()
+		&& function.nParams == 0) {
+		  mainEntryPoint.Here(); }
 		Body(frame);
 		Table.CloseScope();
 	}
@@ -318,8 +315,8 @@ public class Parser {
 
 	static void Body(StackFrame frame) {
 		Label DSPLabel = new Label(known);
-		              int sizeMark = frame.size;
-		              CodeGen.OpenStackFrame(0);
+		int sizeMark = frame.size;
+		CodeGen.OpenStackFrame(0);
 		Expect(lbrace_Sym);
 		while (StartOf(3)) {
 			Statement(frame);
@@ -327,14 +324,13 @@ public class Parser {
 		ExpectWeak(rbrace_Sym, 4);
 		CodeGen.FixDSP(DSPLabel.Address(), frame.size - sizeMark);
 		CodeGen.LeaveVoidFunction();
-		
 	}
 
 	static void OneParam(out Entry param, Entry func) {
 		param = new Entry();
-		                     param.kind = Kinds.Var;
-		   param.offset = CodeGen.headerSize + func.nParams;
-		                     func.nParams++;
+		param.kind = Kinds.Var;
+		param.offset = CodeGen.headerSize + func.nParams;
+		func.nParams++;
 		Type(out param.type);
 		Ident(out param.name);
 		Table.Insert(param);
@@ -376,7 +372,7 @@ public class Parser {
 			break;
 		}
 		case halt_Sym: {
-			HaltStatement(progState);
+			HaltStatement();
 			break;
 		}
 		case return_Sym: {
@@ -443,7 +439,7 @@ public class Parser {
 			AssignOp();
 			Expression(out expType);
 			if (!Assignable(des.type, expType))
-			SemError("incompatible types in assignment");
+			  SemError("incompatible types in assignment");
 			progState = 1;
 			CodeGen.Assign(des.type);
 		} else SynErr(48);
@@ -471,13 +467,19 @@ public class Parser {
 		CodeGen.BranchFalse(loopExit);
 		Statement(frame);
 		CodeGen.Branch(loopStart);
-		    loopExit.Here();
+		loopExit.Here();
 	}
 
-	static void HaltStatement(int progState) {
+	static void HaltStatement() {
 		Expect(halt_Sym);
+		if (la.kind == lparen_Sym) {
+			Get();
+			if (StartOf(9)) {
+				WriteList();
+			}
+			Expect(rparen_Sym);
+		}
 		CodeGen.LeaveProgram();
-		Console.WriteLine("program ended with the code: " + progState);
 		ExpectWeak(semicolon_Sym, 6);
 	}
 
@@ -631,7 +633,7 @@ public class Parser {
 			}
 			if (!comparable) {
 			  SemError("incomparable operands");
-			progState = 1; }
+			  progState = 1; }
 			type = Types.boolType; CodeGen.Comparison(op);
 		}
 	}
@@ -667,10 +669,10 @@ public class Parser {
 			Get();
 			if (IsArray(des.type)) des.type--;
 			else { SemError("unexpected subscript");
-			progState = 1; }
+			  progState = 1; }
 			if (des.entry.kind != Kinds.Var) {
 			  SemError("unexpected subscript");
-			progState = 1; }
+			  progState = 1; }
 			CodeGen.Dereference();
 			Expression(out indexType);
 			if (!IsArith(indexType)) {
@@ -685,7 +687,7 @@ public class Parser {
 		int argType;
 		Expression(out argType);
 		if (fp != null && !Assignable(fp.type, argType))
-		    SemError("argument type mismatch");
+		  SemError("argument type mismatch");
 		progState = 1;
 	}
 
@@ -694,6 +696,13 @@ public class Parser {
 		Expression(out type);
 		if (!IsBool(type)) {
 		  SemError("Boolean expression needed"); progState = 1; }
+	}
+
+	static void WriteList() {
+		WriteElement();
+		while (WeakSeparator(comma_Sym, 9, 2)) {
+			WriteElement();
+		}
 	}
 
 	static void ReadList() {
@@ -713,7 +722,7 @@ public class Parser {
 			Designator(out des);
 			if (des.entry.kind != Kinds.Var) {
 			  SemError("wrong kind of identifier");
-			progState = 1; }
+			  progState = 1; }
 			switch (des.type) {
 			  case Types.intType:
 			  case Types.boolType:
@@ -728,13 +737,6 @@ public class Parser {
 		Expect(stringLit_Sym);
 		str = token.val;
 		str = Unescape(str.Substring(1, str.Length - 2));
-	}
-
-	static void WriteList() {
-		WriteElement();
-		while (WeakSeparator(comma_Sym, 9, 2)) {
-			WriteElement();
-		}
 	}
 
 	static void WriteElement() {
@@ -767,13 +769,13 @@ public class Parser {
 			Term(out type);
 			if (!IsArith(type)) {
 			  SemError("arithmetic operand needed");
-			progState = 1; }
+			  progState = 1; }
 		} else if (la.kind == minus_Sym) {
 			Get();
 			Term(out type);
 			if (!IsArith(type)) {
 			  SemError("arithmetic operand needed");
-			progState = 1; }
+			  progState = 1; }
 			CodeGen.NegateInteger();
 		} else if (StartOf(13)) {
 			Term(out type);
@@ -787,14 +789,14 @@ public class Parser {
 			  case CodeGen.or:
 			    if (!IsBool(type) || !IsBool(type2)) {
 			      SemError("boolean operands needed");
-			progState = 1; }
+			      progState = 1; }
 			    type = Types.boolType;
 			    break;
 			  default:
 			    if (!IsArith(type) || !IsArith(type2)) {
 			      SemError("arithmetic operands needed");
 			      type = Types.noType;
-			progState = 1;
+			      progState = 1;
 			    }
 			    CodeGen.BinaryOp(op);
 			    break;
@@ -860,7 +862,7 @@ public class Parser {
 			    if (!IsArith(type) || !IsArith(type2)) {
 			      SemError("arithmetic operands needed");
 			      type = Types.noType;
-			progState = 1;
+			      progState = 1;
 			    }
 			    CodeGen.BinaryOp(op);
 			    break;
@@ -892,17 +894,17 @@ public class Parser {
 			Designator(out des);
 			type = des.type;
 			switch (des.entry.kind) {
-			    case Kinds.Var:
-			      CodeGen.Dereference();
-			      break;
-			    case Kinds.Con:
-			      CodeGen.LoadConstant(des.entry.value);
-			      break;
-			    default:
-			      SemError("wrong kind of identifier");
-			progState = 1;
-			      break;
-			  }
+			  case Kinds.Var:
+			    CodeGen.Dereference();
+			    break;
+			  case Kinds.Con:
+			    CodeGen.LoadConstant(des.entry.value);
+			    break;
+			  default:
+			    SemError("wrong kind of identifier");
+			    progState = 1;
+			    break;
+			}
 		} else if (StartOf(15)) {
 			Constant(out con);
 			type = con.type;
@@ -915,7 +917,7 @@ public class Parser {
 			Expression(out size);
 			if (!IsArith(size)){
 			  SemError("array size must be integer");
-			progState = 1; }
+			  progState = 1; }
 			CodeGen.Allocate();
 			Expect(rbrack_Sym);
 		} else if (la.kind == bang_Sym) {

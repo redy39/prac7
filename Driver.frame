@@ -44,12 +44,14 @@ namespace -->namespace {
 
     public static void Main (string[] args) {
       bool mergeErrors = false;
+      bool codeOut = false;
       string inputName = null;
 
       // ------------------------ you may need to process command line parameters:
 
       for (int i = 0; i < args.Length; i++) {
         if (args[i].ToLower().Equals("-l")) mergeErrors = true;
+        else if (args[i],ToLower().Equals("-c")) codeOut = true;
         else inputName = args[i];
       }
       if (inputName == null) {

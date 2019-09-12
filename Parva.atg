@@ -138,8 +138,8 @@ PRODUCTIONS
   .
 
   FuncDeclaration      
-                       (. StackFrame frame = new StackFrame();
-                          Entry function = new Entry(); .)
+                                             (. StackFrame frame = new StackFrame();
+                                                Entry function = new Entry(); .)
   =  "void" Ident<out function.name>  
                                              (. function.kind = Kinds.Fun;
                                                 function.type = Types.voidType;
@@ -189,6 +189,7 @@ PRODUCTIONS
             | WhileStatement<frame>
             | HaltStatement
             | ReturnStatement
+            | BreakStatement
             | ReadStatement
             | WriteStatement
             | ";"                            (. Warning("possible unintended empty statement"); .)
@@ -319,32 +320,46 @@ PRODUCTIONS
   .
 
   IfStatement<StackFrame frame>
-                                             (. Label falseLabel = new Label(!known); .)
+                                             (. Label falseLabel = new Label(!known),
+                                                        endElse = new Label(!known); .)
   =  "if" "(" Condition ")"                  (. CodeGen.BranchFalse(falseLabel); .)
-        Statement<frame>                     (. falseLabel.Here(); .)
+        ["then"] Statement<frame>            (. CodeGen.Branch(endElse);
+                                                falseLabel.Here(); .)
+     [ "else" Statement<frame>
+     | ElseIfStatement<frame> ]              (. endElse.Here(); .)
   .
 
+  ElseIfStatement<StackFrame frame>
+                                             (. Label falseLabel = new Label(!known),
+                                                        endElse = new Label(!known); .)
+  =  "elseif" "(" Condition ")"              (. CodeGen.BranchFalse(falseLabel); .)
+        ["then"] Statement<frame>            (. CodeGen.Branch(endElse);
+                                                falseLabel.Here(); .)
+     [ "else" Statement<frame>
+     | ElseIfStatement<frame> ]              (. endElse.Here(); .)
+  .
 
   WhileStatement<StackFrame frame>
                                              (. Label loopExit  = new Label(!known);
                                                 Label loopStart = new Label(known); .)
   =  "while" "(" Condition ")"               (. CodeGen.BranchFalse(loopExit); .)
-     Statement<frame>              	         (. CodeGen.Branch(loopStart);
+     Statement<frame>                        (. CodeGen.Branch(loopStart);
                                                 loopExit.Here(); .)
   .
 
   HaltStatement
   =  "halt"
-     [
-     "(" 
-     [ WriteList ]
-     ")"
-     ]                                       (. CodeGen.LeaveProgram(); .)
+     [ "(" [ WriteList ] ")" ]               (. CodeGen.LeaveProgram(); .)
      WEAK ";"
   .
 
-  ReturnStatement              
+  ReturnStatement
   =  "return"                                (. CodeGen.LeaveVoidFunction(); .)
+    WEAK ";"
+  .
+
+  BreakStatement
+  = "break"
     WEAK ";"
   .
 

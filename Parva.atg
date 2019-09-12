@@ -117,8 +117,8 @@ PRAGMAS
   StackDump   = "$SD" .                      (. CodeGen.Stack(); .)
   HeapDump    = "$HD" .                      (. CodeGen.Heap(); .)
   TableDump   = "$ST" .                      (. Table.PrintTable(OutFile.StdOut); .)
-  CodeGenOn   = "$C+" .                      (. CodeGen.Enable(); .)
-  CodeGenOff  = "$C-" .                      (. CodeGen.Disable(); .)
+  CodeGenOn   = "$C+" .                      (. listCode = true; .)
+  CodeGenOff  = "$C-" .                      (. listCode = false; .)
 
 COMMENTS FROM "//" TO lf
 COMMENTS FROM "/*" TO "*/"
@@ -362,8 +362,6 @@ PRODUCTIONS
   ReadElement                                (. string str;
                                                 DesType des; .)
   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
-    { [ StrAddOp ] StringConst<out str>      (. CodeGen.WriteString(str); .)
-	}
     | Designator<out des>                    (. if (des.entry.kind != Kinds.Var) {
                                                   SemError("wrong kind of identifier");
                                                   progState = 1; }
@@ -390,8 +388,6 @@ PRODUCTIONS
   WriteElement                               (. int expType;
                                                 string str; .)
   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
-    { [ StrAddOp ] StringConst<out str>      (. CodeGen.WriteString(str); .)
-	}
     | Expression<out expType>                (. if (!(IsArith(expType) || expType == Types.boolType)) {
                                                   SemError("cannot write this type"); progState = 1; }
                                                 switch (expType) {
@@ -522,11 +518,7 @@ PRODUCTIONS
      | "-"                                   (. op = CodeGen.sub; .)
      | "||"                                  (. op = CodeGen.or;  .)
   .
-  
-  StrAddOp
-  =   "+"      
-  .
-  
+
   MulOp<out int op>                          (. op = CodeGen.nop; .)
   =    "*"                                   (. op = CodeGen.mul; .)
      | "/"                                   (. op = CodeGen.div; .)
@@ -550,7 +542,9 @@ PRODUCTIONS
   .
 
   StringConst<out string str>
-  =  stringLit                               (. str = token.val;
+  =  stringLit                               (. str = token.val; .)
+     { ["+"] stringLit                       (. str += token.val .)
+     }
                                                 str = Unescape(str.Substring(1, str.Length - 2)); .)
   .
 

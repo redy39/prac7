@@ -314,7 +314,6 @@ PRODUCTIONS
                                                   SemError("invalid subscript type");
                                                 progState = 1; }
                                                 CodeGen.Index(); .)
-
            "]"
      ]
   .

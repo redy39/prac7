@@ -58,7 +58,7 @@ namespace -->namespace {
         else if (args[i].ToLower().Equals("-d")) Parser.debug = true;
         else if (args[i].ToLower().Equals("-n")) execution = false;
         else if (args[i].ToLower().Equals("-g")) immediate = true;
-        else if (args[i].ToLower().Equals("-c")) codeOut = true;
+        else if (args[i].ToLower().Equals("-c")) Parser.listCode = true;
         else inputName = args[i];
       }
       if (inputName == null) {
@@ -84,7 +84,6 @@ namespace -->namespace {
 
       // ------------------------ compilation
 
-      // if (!codeOut) CodeGen.Disable();
       Parser.Parse();
       Errors.Summarize();
 

@@ -1,0 +1,36 @@
+ASSEM
+BEGIN
+  {    0 } FHDR    
+  {    1 } CALL     4
+  {    3 } HALT    
+  {    4 } DSP      1
+  {    6 } LDA      4
+  {    8 } LDC      42
+  {   10 } STO     
+  {   11 } PRNS     "start this is a test to see if it is doing the right things im not even sure i answered the question correctly"
+  {   13 } PRNS     "but i think this works"
+  {   15 } PRNS     "start this is a test to see if it is doing the right things im not even sure i answered the question correctly"
+  {   17 } PRNS     "but i think this works"
+  {   19 } PRNS     "start this is a test to see if it is doing the right things im not even sure i answered the question correctly"
+  {   21 } PRNS     "but i think this works"
+  {   23 } PRNL    
+  {   24 } PRNS     "reason is "
+  {   26 } LDA      4
+  {   28 } LDV     
+  {   29 } PRNI    
+  {   30 } PRNL    
+  {   31 } PRNS     "Supply a better reason code "
+  {   33 } LDA      4
+  {   35 } INPI    
+  {   36 }         
+  {   37 } PRNS     "aborted "
+  {   39 } LDA      4
+  {   41 } LDV     
+  {   42 } PRNI    
+  {   43 } HALT    
+  {   44 } PRNS     "continue"
+  {   46 } PRNS     "if you see this your compiler is wrong"
+  {   48 } HALT    
+  {   49 } PRNS     "finished"
+  {   51 } RETV    
+END.

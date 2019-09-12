@@ -732,6 +732,13 @@ public class Parser {
 		if (la.kind == stringLit_Sym) {
 			StringConst(out str);
 			CodeGen.WriteString(str);
+			while (la.kind == stringLit_Sym || la.kind == plus_Sym) {
+				if (la.kind == plus_Sym) {
+					StrAddOp();
+				}
+				StringConst(out str);
+				CodeGen.WriteString(str);
+			}
 		} else if (la.kind == identifier_Sym) {
 			Designator(out des);
 			if (des.entry.kind != Kinds.Var) {
@@ -753,12 +760,23 @@ public class Parser {
 		str = Unescape(str.Substring(1, str.Length - 2));
 	}
 
+	static void StrAddOp() {
+		Expect(plus_Sym);
+	}
+
 	static void WriteElement() {
 		int expType;
 		string str;
 		if (la.kind == stringLit_Sym) {
 			StringConst(out str);
 			CodeGen.WriteString(str);
+			while (la.kind == stringLit_Sym || la.kind == plus_Sym) {
+				if (la.kind == plus_Sym) {
+					StrAddOp();
+				}
+				StringConst(out str);
+				CodeGen.WriteString(str);
+			}
 		} else if (StartOf(11)) {
 			Expression(out expType);
 			if (!(IsArith(expType) || expType == Types.boolType)) {

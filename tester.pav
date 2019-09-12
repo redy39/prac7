@@ -1,0 +1,16 @@
+void Main () { $C+
+  int reason = 42;
+  read("start this is a test to see if it is doing the right things im not even sure i answered the question correctly"
+          "but i think this works");	 
+  read( "start this is a test to see if it is doing the right things im not even sure i answered the question correctly"
+         + "but i think this works");
+  write("start this is a test to see if it is doing the right things im not even sure i answered the question correctly"
+         "but i think this works");
+  writeLine();
+  writeLine("reason is ", reason);
+  readLine("Supply a better reason code ", reason);
+  halt("aborted ", reason);
+  write("continue");
+  halt("if you see this your compiler is wrong");;
+  write("finished");
+}

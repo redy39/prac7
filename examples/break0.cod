@@ -4,5 +4,16 @@ BEGIN
   {    1 } CALL     4
   {    3 } HALT    
   {    4 } DSP      0
-  {    6 } RETV    
+  {    6 } LDC      1
+  {    8 } BZE      24
+  {   10 } LDC      1
+  {   12 } PRNI    
+  {   13 } LDA      0
+  {   15 } STO     
+  {   16 } LDC      2
+  {   18 } PRNI    
+  {   19 } LDA      0
+  {   21 } STO     
+  {   22 } BRN      6
+  {   24 } RETV    
 END.

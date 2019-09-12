@@ -228,10 +228,10 @@ public class Parser {
 				Table.PrintTable(OutFile.StdOut);
 				}
 				if (la.kind == CodeGenOn_Sym) {
-				CodeGen.generatingCode = true;
+				CodeGen.Enable();
 				}
 				if (la.kind == CodeGenOff_Sym) {
-				CodeGen.generatingCode = false;
+				CodeGen.Disable();
 				}
 
 			la = token; /* pdt */

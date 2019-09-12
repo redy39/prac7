@@ -3,6 +3,29 @@ BEGIN
   {    0 } FHDR    
   {    1 } CALL     4
   {    3 } HALT    
-  {    4 } DSP      0
-  {    6 } RETV    
+  {    4 } DSP      1
+  {    6 } LDA      4
+  {    8 } LDC      42
+  {   10 } STO     
+  {   11 } PRNS     "start"
+  {   13 } PRNL    
+  {   14 } PRNS     "reason is "
+  {   16 } LDA      4
+  {   18 } LDV     
+  {   19 } PRNI    
+  {   20 } PRNL    
+  {   21 } PRNS     "Supply a better reason code "
+  {   23 } LDA      4
+  {   25 } INPI    
+  {   26 }         
+  {   27 } PRNS     "aborted "
+  {   29 } LDA      4
+  {   31 } LDV     
+  {   32 } PRNI    
+  {   33 } HALT    
+  {   34 } PRNS     "continue"
+  {   36 } PRNS     "if you see this your compiler is wrong"
+  {   38 } HALT    
+  {   39 } PRNS     "finished"
+  {   41 } RETV    
 END.

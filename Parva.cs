@@ -57,7 +57,7 @@ namespace Parva {
 
       // ------------------------ compilation
 
-      if (!codeOut) CodeGen.Disable();
+      // if (!codeOut) CodeGen.Disable();
       Parser.Parse();
       Errors.Summarize();
 

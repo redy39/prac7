@@ -31,7 +31,8 @@ namespace Parva {
         else if (args[i].ToLower().Equals("-d")) Parser.debug = true;
         else if (args[i].ToLower().Equals("-n")) execution = false;
         else if (args[i].ToLower().Equals("-g")) immediate = true;
-        else if (args[i].ToLower().Equals("-c")) codeOut = true;
+        else if (args[i].ToLower().Equals("-c")) Parser.listCode = true;
+        else if (args[i].ToLower().Equals("-w")) Parser.warnings = false;
         else inputName = args[i];
       }
       if (inputName == null) {
@@ -41,6 +42,8 @@ namespace Parva {
         Console.WriteLine("-d turns on debug mode");
         Console.WriteLine("-n no execution after compilation");
         Console.WriteLine("-g execute immediately after compilation (StdIn/StdOut)");
+        Console.WriteLine("-c produce .cod listing");
+        Console.WriteLine("-w supress warning messages");
         System.Environment.Exit(1);
       }
 
@@ -57,7 +60,6 @@ namespace Parva {
 
       // ------------------------ compilation
 
-      // if (!codeOut) CodeGen.Disable();
       Parser.Parse();
       Errors.Summarize();
 

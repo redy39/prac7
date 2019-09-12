@@ -8,6 +8,7 @@ COMPILER Parva $NC
    No globals or value returning functions
    int and bool types supported
    Bradshaw -- version for Practical 7, 2019  */
+   Adapted by Redy van Dyk && Scott Burnett - Group Q
 
   public static bool // tied to pragmas/directives
     debug    = false,
@@ -119,6 +120,8 @@ PRAGMAS
   TableDump   = "$ST" .                      (. Table.PrintTable(OutFile.StdOut); .)
   CodeGenOn   = "$C+" .                      (. listCode = true; .)
   CodeGenOff  = "$C-" .                      (. listCode = false; .)
+  WarningsOn  = "$W+" .                      (. warnings = true; .)
+  WarningsOff = "$W-" .                      (. warnings = false; .)
 
 COMMENTS FROM "//" TO lf
 COMMENTS FROM "/*" TO "*/"

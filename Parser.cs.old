@@ -469,7 +469,8 @@ public class Parser {
 	}
 
 	static void IfStatement(StackFrame frame) {
-		Label falseLabel = new Label(!known);
+		Label falseLabel = new Label(!known),
+		        endElse = new Label(!known);
 		Expect(if_Sym);
 		Expect(lparen_Sym);
 		Condition();
@@ -479,6 +480,7 @@ public class Parser {
 			Get();
 		}
 		Statement(frame);
+		CodeGen.Branch(endElse);
 		falseLabel.Here();
 		if (la.kind == else_Sym || la.kind == elseif_Sym) {
 			if (la.kind == else_Sym) {
@@ -488,6 +490,7 @@ public class Parser {
 				ElseIfStatement(frame);
 			}
 		}
+		endElse.Here();
 	}
 
 	static void WhileStatement(StackFrame frame) {
@@ -737,7 +740,8 @@ public class Parser {
 	}
 
 	static void ElseIfStatement(StackFrame frame) {
-		Label falseLabel = new Label(!known);
+		Label falseLabel = new Label(!known),
+		        endElse = new Label(!known);
 		Expect(elseif_Sym);
 		Expect(lparen_Sym);
 		Condition();
@@ -747,6 +751,7 @@ public class Parser {
 			Get();
 		}
 		Statement(frame);
+		CodeGen.Branch(endElse);
 		falseLabel.Here();
 		if (la.kind == else_Sym || la.kind == elseif_Sym) {
 			if (la.kind == else_Sym) {
@@ -756,6 +761,7 @@ public class Parser {
 				ElseIfStatement(frame);
 			}
 		}
+		endElse.Here();
 	}
 
 	static void WriteList() {

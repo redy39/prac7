@@ -228,10 +228,10 @@ public class Parser {
 				Table.PrintTable(OutFile.StdOut);
 				}
 				if (la.kind == CodeGenOn_Sym) {
-				CodeGen.Enable();
+				listCode = true;
 				}
 				if (la.kind == CodeGenOff_Sym) {
-				CodeGen.Disable();
+				listCode = false;
 				}
 
 			la = token; /* pdt */
@@ -732,13 +732,6 @@ public class Parser {
 		if (la.kind == stringLit_Sym) {
 			StringConst(out str);
 			CodeGen.WriteString(str);
-			while (la.kind == stringLit_Sym || la.kind == plus_Sym) {
-				if (la.kind == plus_Sym) {
-					StrAddOp();
-				}
-				StringConst(out str);
-				CodeGen.WriteString(str);
-			}
 		} else if (la.kind == identifier_Sym) {
 			Designator(out des);
 			if (des.entry.kind != Kinds.Var) {
@@ -757,11 +750,14 @@ public class Parser {
 	static void StringConst(out string str) {
 		Expect(stringLit_Sym);
 		str = token.val;
+		while (la.kind == stringLit_Sym || la.kind == plus_Sym) {
+			if (la.kind == plus_Sym) {
+				Get();
+			}
+			Expect(stringLit_Sym);
+			str += token.val;
+		}
 		str = Unescape(str.Substring(1, str.Length - 2));
-	}
-
-	static void StrAddOp() {
-		Expect(plus_Sym);
 	}
 
 	static void WriteElement() {
@@ -770,13 +766,6 @@ public class Parser {
 		if (la.kind == stringLit_Sym) {
 			StringConst(out str);
 			CodeGen.WriteString(str);
-			while (la.kind == stringLit_Sym || la.kind == plus_Sym) {
-				if (la.kind == plus_Sym) {
-					StrAddOp();
-				}
-				StringConst(out str);
-				CodeGen.WriteString(str);
-			}
 		} else if (StartOf(11)) {
 			Expression(out expType);
 			if (!(IsArith(expType) || expType == Types.boolType)) {

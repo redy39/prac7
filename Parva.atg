@@ -543,9 +543,9 @@ PRODUCTIONS
 
   StringConst<out string str>
   =  stringLit                               (. str = token.val; .)
-     { ["+"] stringLit                       (. str += token.val .)
+     { ["+"] stringLit                       (. str += token.val; .)
      }
-                                                str = Unescape(str.Substring(1, str.Length - 2)); .)
+                                             (. str = Unescape(str.Substring(1, str.Length - 2)); .)
   .
 
   CharConst<out int value>

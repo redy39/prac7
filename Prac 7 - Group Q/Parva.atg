@@ -559,7 +559,7 @@ PRODUCTIONS
 
   StringConst<out string str>
   =  stringLit                               (. str = token.val; .)
-     { ["+"] stringLit                       (. str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1); .)
+     { ["+"] stringLit                       (. str += token.val; .)
      }
                                              (. str = Unescape(str.Substring(1, str.Length - 2)); .)
   .

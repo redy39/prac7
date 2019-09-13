@@ -14,8 +14,8 @@
    7    Void functions, value parameter passing
    8    No globals or value returning functions
    9    int and bool types supported
-  10    Bradshaw -- version for Practical 7, 2019  */
-  11 
+  10    Bradshaw -- version for Practical 7, 2019
+  11    Adapted by Redy van Dyk && Scott Burnett - Group Q */
   12   public static bool // tied to pragmas/directives
   13     debug    = false,
   14     listCode = false,
@@ -566,7 +566,7 @@
  559 
  560   StringConst<out string str>
  561   =  stringLit                               (. str = token.val; .)
- 562      { ["+"] stringLit                       (. str += token.val; .)
+ 562      { ["+"] stringLit                       (. str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1); .)
  563      }
  564                                              (. str = Unescape(str.Substring(1, str.Length - 2)); .)
  565   .

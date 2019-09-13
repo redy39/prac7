@@ -1,0 +1,39 @@
+ASSEM
+BEGIN
+  {    0 } FHDR    
+  {    1 } CALL     4
+  {    3 } HALT    
+  {    4 } DSP      4
+  {    6 } LDA      4
+  {    8 } LDV     
+  {    9 } LDC      1
+  {   11 } CEQ     
+  {   12 } BZE      22
+  {   14 } LDA      6
+  {   16 } LDA      7
+  {   18 } LDV     
+  {   19 } STO     
+  {   20 } BRN      22
+  {   22 } LDA      4
+  {   24 } LDV     
+  {   25 } LDC      1
+  {   27 } CEQ     
+  {   28 } BZE      32
+  {   30 } BRN      32
+  {   32 } LDA      4
+  {   34 } LDV     
+  {   35 } LDC      1
+  {   37 } CEQ     
+  {   38 } BZE      42
+  {   40 } BRN      42
+  {   42 } LDA      4
+  {   44 } LDV     
+  {   45 } LDC      1
+  {   47 } CEQ     
+  {   48 } BZE      52
+  {   50 } BRN      57
+  {   52 } LDA      5
+  {   54 } LDC      1
+  {   56 } STO     
+  {   57 } RETV    
+END.

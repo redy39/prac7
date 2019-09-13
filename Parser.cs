@@ -817,7 +817,7 @@ public class Parser {
 				Get();
 			}
 			Expect(stringLit_Sym);
-			str += token.val;
+			str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1);
 		}
 		str = Unescape(str.Substring(1, str.Length - 2));
 	}

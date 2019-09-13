@@ -1,0 +1,45 @@
+ASSEM
+BEGIN
+  {    0 } FHDR    
+  {    1 } CALL     4
+  {    3 } HALT    
+  {    4 } DSP      1
+  {    6 } LDC      1
+  {    8 } BZE      69
+  {   10 } LDA      4
+  {   12 } INPI    
+  {   13 } LDA      4
+  {   15 } LDV     
+  {   16 } LDC      0
+  {   18 } CEQ     
+  {   19 } BZE      23
+  {   21 } BRN      23
+  {   23 } LDA      4
+  {   25 } LDV     
+  {   26 } LDC      12
+  {   28 } CEQ     
+  {   29 } BZE      35
+  {   31 } PRNS     "twelve"
+  {   33 } BRN      61
+  {   35 } LDA      4
+  {   37 } LDV     
+  {   38 } LDC      13
+  {   40 } CEQ     
+  {   41 } BZE      47
+  {   43 } PRNS     "thirteen"
+  {   45 } BRN      61
+  {   47 } LDA      4
+  {   49 } LDV     
+  {   50 } LDC      16
+  {   52 } CEQ     
+  {   53 } BZE      59
+  {   55 } PRNS     "sixteen"
+  {   57 } BRN      61
+  {   59 } PRNS     "nothing special"
+  {   61 } LDA      4
+  {   63 } LDV     
+  {   64 } PRNI    
+  {   65 } PRNS     "\n"
+  {   67 } BRN      6
+  {   69 } RETV    
+END.

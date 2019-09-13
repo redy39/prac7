@@ -73,6 +73,8 @@ public class Parser {
 	public const int TableDump_Sym = 54;
 	public const int CodeGenOn_Sym = 55;
 	public const int CodeGenOff_Sym = 56;
+	public const int WarningsOn_Sym = 57;
+	public const int WarningsOff_Sym = 58;
 
 	public const int maxT = 49;
 	public const int _DebugOn = 50;
@@ -82,6 +84,8 @@ public class Parser {
 	public const int _TableDump = 54;
 	public const int _CodeGenOn = 55;
 	public const int _CodeGenOff = 56;
+	public const int _WarningsOn = 57;
+	public const int _WarningsOff = 58;
 
 	const bool T = true;
 	const bool x = false;
@@ -236,6 +240,12 @@ public class Parser {
 				}
 				if (la.kind == CodeGenOff_Sym) {
 				listCode = false;
+				}
+				if (la.kind == WarningsOn_Sym) {
+				warnings = true;
+				}
+				if (la.kind == WarningsOff_Sym) {
+				warnings = false;
 				}
 
 			la = token; /* pdt */
@@ -807,7 +817,7 @@ public class Parser {
 				Get();
 			}
 			Expect(stringLit_Sym);
-			str += token.val;
+			str = str.Substring(0, str.Length - 1) + token.val.Substring(1, str.Length - 1);
 		}
 		str = Unescape(str.Substring(1, str.Length - 2));
 	}

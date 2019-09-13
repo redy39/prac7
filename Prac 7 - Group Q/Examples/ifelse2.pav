@@ -7,6 +7,7 @@ void Main () { $C+
     if (i == 12) write("twelve");
     elseif (i == 13) write("thirteen");
     elseif (i == 16) write("sixteen");
+    else write("nothing special");
     write(i, "\n");
   }
 }

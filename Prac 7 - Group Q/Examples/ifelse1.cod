@@ -1,0 +1,23 @@
+ASSEM
+BEGIN
+  {    0 } FHDR    
+  {    1 } CALL     4
+  {    3 } HALT    
+  {    4 } DSP      1
+  {    6 } LDA      4
+  {    8 } INPI    
+  {    9 } LDA      4
+  {   11 } LDV     
+  {   12 } LDC      0
+  {   14 } CGT     
+  {   15 } BZE      19
+  {   17 } PRNS     "positive"
+  {   19 } PRNS     "negative"
+  {   21 } LDA      4
+  {   23 } LDV     
+  {   24 } LDC      10
+  {   26 } CGT     
+  {   27 } BZE      31
+  {   29 } PRNS     "greater than 10"
+  {   31 } RETV    
+END.

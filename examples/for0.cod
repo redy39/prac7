@@ -38,24 +38,19 @@ BEGIN
   {   56 } ADD     
   {   57 } STO     
   {   58 } BRN      16
-  {   60 } LDA      5
-  {   62 } LDC      90
-  {   64 } STO     
-  {   65 } LDA      6
-  {   67 } LDC      5
-  {   69 } STO     
-  {   70 } LDA      6
-  {   72 } LDA      6
-  {   74 } LDV     
-  {   75 } LDC      3
-  {   77 } ADD     
-  {   78 } STO     
-  {   79 } LDA      4
-  {   81 } LDC      100
-  {   83 } LDC      200
-  {   85 } MUL     
-  {   86 } LDC      1
-  {   88 } ADD     
-  {   89 } STO     
-  {   90 } RETV    
+  {   60 } LDC      24
+  {   62 } LDC      34
+  {   64 } MUL     
+  {   65 } LDC      12
+  {   67 } MUL     
+  {   68 } LDC      1
+  {   70 } ADD     
+  {   71 } LDC      1
+  {   73 } ADD     
+  {   74 } LDC      34
+  {   76 } LDC      5
+  {   78 } DIV     
+  {   79 } ADD     
+  {   80 } PRNI    
+  {   81 } RETV    
 END.

@@ -81,6 +81,17 @@ namespace Parva {
         PVM.mem[codeTop] = word; codeTop++;
       }
     } // CodeGen.Emit
+    
+    public static void writeWord(int word) {
+    // Code generator for single word
+      if (!generatingCode) return;
+      if (codeTop >= stkTop) {
+        Parser.SemError("program too long"); generatingCode = false;
+      }
+      else {
+        PVM.mem[codeTop] = word; codeTop++;
+      }
+    } // CodeGen.Emit
 
     public static void NegateInteger() {
     // Generates code to negate integer value on top of evaluation stack
@@ -319,6 +330,11 @@ namespace Parva {
     // Inline assembly of two word branch style instruction with Label operand
       Emit(PVM.OpCode(mnemonic)); Emit(adr.Address());
     } // CodeGen.Branch
+
+    public static void Push(int value) {
+        Emit(PVM.push);
+        Emit(value);   
+    }
 
   } // end CodeGen
 

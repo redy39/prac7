@@ -5,7 +5,7 @@ void Main () { $C+ $D+
   for i in (6, 3, 4, 7, 5, -16, 300) {
     if (i % 5 == 0) break;
     write(i); }
-  writeLine();
+  //writeLine();
   bool b;
   for b in (true, false, 3 > 4) write(b);
 }

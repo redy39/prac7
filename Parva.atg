@@ -362,20 +362,69 @@ PRODUCTIONS
  .
  
   ForStatement<StackFrame frame>
-                                             (. Label loopExit  = new Label(!known); 
+                                             
+  = "for" ( NormalFor<frame> | FancyFor<frame> ) .
+    
+  NormalFor<StackFrame frame>                (. Label loopExit  = new Label(!known); 
                                                 Label loopStart = new Label(!known); .)
-  = "for" "("                                (. string name = ""; .)
+    
+  =  
+    "("                                      (. string name = ""; .)
     ( AssignmentOrCall    
-    | Ident<out name> WEAK ";"               (. if(Table.Find(name) == null) SemError("Undeclared Identifier: " + name); .)
+    | Ident<out name> WEAK ";"               (. if(Table.Find(name) == null)
+                                                  SemError("Undeclared Identifier: " + name); .)
     | VarDeclarations<frame> )
                                              (. loopStart.Here(); .)
     Condition                                (. CodeGen.BranchFalse(loopExit); .)
     WEAK ";"
     AssignmentOrCall
     ")"
-    Statement<frame, loopExit>               (. CodeGen.Branch(loopStart);
-                                                loopExit.Here(); .)
+    Statement<frame, loopExit>               (. CodeGen.Branch(loopStart); .)
+                                             (. loopExit.Here(); .)
+    .
+    
+    
+    FancyFor<StackFrame frame>               (. Label loopExit  = new Label(!known); 
+                                                Label loopStart = new Label(!known); .)
+        
+    =
+                                             (. string name = ""; Entry e; int cnt = 0, start = 0;
+                                                Entry i = new Entry(); i.value = 0; i.type = Types.intType; 
+                                                i.offset = CodeGen.GetInitSP();
+                                                CodeGen.Push(i.value); .)
+    Ident<out name>                          (. e = Table.Find(name); 
+                                                if(e == null) 
+                                                  SemError("Undeclared Identifier: " + name); .)
+    "in"                                     (. int exprType = Types.noType; .)
+    
+    "(" [ Expression<out exprType>           (. if (exprType != e.type) SemError("Type mismatch!"); .)
+                                             (. cnt++;
+                                                start = CodeGen.GetInitSP(); .)
+    
+    { "," Expression<out exprType>           (. if (exprType != e.type) SemError("Type mismatch!"); .)
+                                             (. cnt++; .)
+    
+    } ] ")"                                  (. loopStart.Here(); .)
+                                             (. CodeGen.LoadValue(i); .)
+                                             (. CodeGen.LoadConstant(cnt); .)
+                                             (. CodeGen.Comparison(CodeGen.clt); .)
+                                             (. CodeGen.BranchFalse(loopExit); .)
+                                             (. CodeGen.LoadAddress(e); .)
+                                             (. CodeGen.LoadConstant(start); .)
+                                             (. CodeGen.LoadValue(i); .)
+                                             (. CodeGen.BinaryOp(CodeGen.sub); .)
+                                             (. CodeGen.writeWord(PVM.ldv); .)
+                                             (. CodeGen.Assign(e.type); .)
+                                                
+    Statement<frame, loopExit>               (. CodeGen.LoadAddress(i); .)
+                                             (. CodeGen.LoadValue(i); .) 
+                                             (. CodeGen.LoadConstant(1); .)
+                                             (. CodeGen.BinaryOp(CodeGen.add); .)
+                                             (. CodeGen.Assign(i.type); .)
+                                             (. CodeGen.Branch(loopStart); .)                                        
+                                             (. loopExit.Here(); .)
   .
+  
   HaltStatement
   =  "halt"
      [ "(" [ WriteList ] ")" ]               (. CodeGen.LeaveProgram(); .)

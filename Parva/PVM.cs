@@ -117,6 +117,7 @@ namespace Parva {
       stoc    =  88,
       sub     =  89,
       trap    =  90,
+      push    =  91,
 
       nul     = 255;                         // leave gap for future
 
@@ -692,6 +693,9 @@ namespace Parva {
           case PVM.dup:           // duplicate tos
             tos = Pop();
             Push(tos); Push(tos);
+            break;
+          case PVM.push:
+            Push(Next());
             break;
           default:                // unrecognized opcode
             ps = badOp;

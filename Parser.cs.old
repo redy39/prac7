@@ -375,36 +375,66 @@ public class Parser {
 
 	static void Statement(StackFrame frame, Label label) {
 		while (!(StartOf(5))) {SynErr(53); Get();}
-		if (la.kind == lbrace_Sym) {
+		switch (la.kind) {
+		case lbrace_Sym: {
 			Block(frame, label);
-		} else if (la.kind == const_Sym) {
+			break;
+		}
+		case const_Sym: {
 			ConstDeclarations();
-		} else if (la.kind == int_Sym || la.kind == bool_Sym) {
+			break;
+		}
+		case int_Sym: case bool_Sym: {
 			VarDeclarations(frame);
-		} else if (la.kind == identifier_Sym) {
+			break;
+		}
+		case identifier_Sym: {
 			AssignmentOrCall();
-		} else if (la.kind == if_Sym) {
+			break;
+		}
+		case if_Sym: {
 			IfStatement(frame, label);
-		} else if (la.kind == while_Sym) {
+			break;
+		}
+		case while_Sym: {
 			WhileStatement(frame);
-		} else if (la.kind == do_Sym) {
+			break;
+		}
+		case do_Sym: {
 			DoWhileStatment(frame);
-		} else if (la.kind == identifier_Sym || la.kind == for_Sym) {
+			break;
+		}
+		case for_Sym: {
 			ForStatement(frame);
-		} else if (la.kind == halt_Sym) {
+			break;
+		}
+		case halt_Sym: {
 			HaltStatement();
-		} else if (la.kind == return_Sym) {
+			break;
+		}
+		case return_Sym: {
 			ReturnStatement();
-		} else if (la.kind == break_Sym) {
+			break;
+		}
+		case break_Sym: {
 			BreakStatement(label);
-		} else if (la.kind == read_Sym || la.kind == readLine_Sym) {
+			break;
+		}
+		case read_Sym: case readLine_Sym: {
 			ReadStatement();
-		} else if (la.kind == write_Sym || la.kind == writeLine_Sym) {
+			break;
+		}
+		case write_Sym: case writeLine_Sym: {
 			WriteStatement();
-		} else if (la.kind == semicolon_Sym) {
+			break;
+		}
+		case semicolon_Sym: {
 			Get();
 			Warning("possible unintended empty statement");
-		} else SynErr(54);
+			break;
+		}
+		default: SynErr(54); break;
+		}
 	}
 
 	static void Block(StackFrame frame, Label Lbend) {
@@ -514,8 +544,8 @@ public class Parser {
 	}
 
 	static void ForStatement(StackFrame frame) {
-		if (la.kind == for_Sym) {
-			Get();
+		Expect(for_Sym);
+		if (la.kind == lparen_Sym) {
 			NormalFor(frame);
 		} else if (la.kind == identifier_Sym) {
 			FancyFor(frame);

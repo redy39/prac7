@@ -192,7 +192,7 @@ namespace Parva {
       Emit(var.offset);
     } // CodeGen.LoadAddress
 
-    public static void LoadValue(Entry var) {
+    public static void LoadValue {
     // Generates code to push value of variable var onto evaluation stack
       Emit(PVM.ldl); Emit(var.offset);
     } // CodeGen.LoadValue

@@ -117,7 +117,8 @@ namespace Parva {
       stoc    =  88,
       sub     =  89,
       trap    =  90,
-      push    =  91,
+      stra    =  91,
+      jra     =  92,
 
       nul     = 255;                         // leave gap for future
 
@@ -697,6 +698,12 @@ namespace Parva {
           case PVM.push:
             Push(Next());
             break;
+          case PVM.stra:
+            Push(cpu.pc);
+            break;
+          case PVM.jra:
+            cpu.pc = Pop();
+            break;          
           default:                // unrecognized opcode
             ps = badOp;
             break;
@@ -787,6 +794,7 @@ namespace Parva {
           case PVM.ldl:
           case PVM.stl:
           case PVM.stlc:
+          case PVM.push:
             i = (i + 1) % memSize; codeFile.Write(mem[i]);
             break;
 
@@ -925,7 +933,6 @@ namespace Parva {
       mnemonics[PVM.stoc]     = "STOC";
       mnemonics[PVM.sub]      = "SUB";
       mnemonics[PVM.trap]     = "TRAP";
-
     } // PVM.Init
 
   } // end PVM

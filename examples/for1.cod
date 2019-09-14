@@ -4,8 +4,7 @@ BEGIN
   {    1 } CALL     4
   {    3 } HALT    
   {    4 } DSP      2
-  {    6 }         
-  {    7 }         
+  {    6 } PUSH     0
   {    8 } LDC      6
   {   10 } LDC      3
   {   12 } LDC      4
@@ -42,8 +41,7 @@ BEGIN
   {   64 } ADD     
   {   65 } STO     
   {   66 } BRN      23
-  {   68 }         
-  {   69 }         
+  {   68 } PUSH     0
   {   70 } LDC      1
   {   72 } LDC      0
   {   74 } LDC      3

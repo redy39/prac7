@@ -1,7 +1,8 @@
 void Main () { $C+
 // break0.pav
 // Simple break statements
-  while (true) {
+int i = 0;
+  while (1 < 10) {
     write(1);
     break;
     write(2);

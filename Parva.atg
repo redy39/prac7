@@ -174,34 +174,37 @@ PRODUCTIONS
      Ident<out param.name>                   (. Table.Insert(param); .)
   .
 
-  Body<StackFrame frame>                     (. Label DSPLabel = new Label(known);
+  Body<StackFrame frame>                     (. Label Lbend = new Label(!known); 
+                                                Label DSPLabel = new Label(known);
                                                 int sizeMark = frame.size;
                                                 CodeGen.OpenStackFrame(0); .)
-  =  "{" { Statement<frame> }
+  =  "{" { Statement<frame, Lbend> }
      WEAK "}"                                (. CodeGen.FixDSP(DSPLabel.Address(), frame.size - sizeMark);
-                                                CodeGen.LeaveVoidFunction(); .)
-.
+                                                Lbend.Here();
+												CodeGen.LeaveVoidFunction(); .)
+.                                        
 
-  Statement<StackFrame frame>
-  =  SYNC (   Block<frame>
+  Statement<StackFrame frame, Label label>
+  =  SYNC (   Block<frame, label>
             | ConstDeclarations
             | VarDeclarations<frame>
             | AssignmentOrCall
-            | IfStatement<frame>
+            | IfStatement<frame, label>
             | WhileStatement<frame>
-			| DoWhileStm<frame>
+			| DoWhileStatment<frame>
+			| ForStatement<frame>
             | HaltStatement
             | ReturnStatement
-            | BreakStatement
+            | BreakStatement<label>
             | ReadStatement
             | WriteStatement
             | ";"                            (. Warning("possible unintended empty statement"); .)
           ) .
 
-  Block<StackFrame frame>
+  Block<StackFrame frame, Label Lbend>
   =                                          (. Table.OpenScope();
                                                 bool empty = true;  .)
-     "{" { Statement<frame> }                (. empty = false; .)
+     "{" { Statement<frame, Lbend> }                (. empty = false; .)
      WEAK "}"                                (. if (empty) Warning("possible unintended empty block");
                                                 Table.CloseScope(); .)
   .
@@ -321,42 +324,58 @@ PRODUCTIONS
      ]
   .
 
-  IfStatement<StackFrame frame>
+  IfStatement<StackFrame frame, Label endBlock>
                                              (. Label falseLabel = new Label(!known),
                                                         endElse = new Label(!known); .)
   =  "if" "(" Condition ")"                  (. CodeGen.BranchFalse(falseLabel); .)
-        ["then"] Statement<frame>            (. CodeGen.Branch(endElse);
+        ["then"] Statement<frame, endBlock>  (.   CodeGen.Branch(endElse);
                                                 falseLabel.Here(); .)
-     [ "else" Statement<frame>
-     | ElseIfStatement<frame> ]              (. endElse.Here(); .)
+     [ "else" Statement<frame, endBlock>
+     | ElseIfStatement<frame, endBlock> ]    (. endElse.Here(); .)
   .
 
-  ElseIfStatement<StackFrame frame>
+  ElseIfStatement<StackFrame frame, Label endBlock>
                                              (. Label falseLabel = new Label(!known),
                                                         endElse = new Label(!known); .)
   =  "elseif" "(" Condition ")"              (. CodeGen.BranchFalse(falseLabel); .)
-        ["then"] Statement<frame>            (. CodeGen.Branch(endElse);
+        ["then"] Statement<frame, endBlock>  (. CodeGen.Branch(endElse);
                                                 falseLabel.Here(); .)
-     [ "else" Statement<frame>
-     | ElseIfStatement<frame> ]              (. endElse.Here(); .)
+     [ "else" Statement<frame, endBlock>
+     | ElseIfStatement<frame, endBlock> ]    (. endElse.Here(); .)
   .
 
   WhileStatement<StackFrame frame>
                                              (. Label loopExit  = new Label(!known);
                                                 Label loopStart = new Label(known); .)
   =  "while" "(" Condition ")"               (. CodeGen.BranchFalse(loopExit); .)
-     Statement<frame>                        (. CodeGen.Branch(loopStart);
+     Statement<frame, loopExit>              (. CodeGen.Branch(loopStart);
                                                 loopExit.Here(); .)
   .
   
-  DoWhileStm<StackFrame frame>
+  DoWhileStatment<StackFrame frame>
                                              (. Label loopExit  = new Label(!known); 
                                                 Label loopStart = new Label(known); .)
-  = "do" Statement<frame>
+  = "do" Statement<frame, loopExit>
     "while" "(" Condition ")"                (. CodeGen.BranchFalse(loopExit); .)
                                              (. CodeGen.Branch(loopStart); .)
 											 (. loopExit.Here(); .)
  .
+ 
+  ForStatement<StackFrame frame>
+                                             (. Label loopExit  = new Label(!known); 
+                                                Label loopStart = new Label(!known); .)
+  = "for" "("                                (. string name = ""; .)
+    ( AssignmentOrCall    
+    | Ident<out name> WEAK ";"               (. if(Table.Find(name) == null) SemError("Undeclared Identifier: " + name); .)
+    | VarDeclarations<frame> )
+                                             (. loopStart.Here(); .)
+    Condition                                (. CodeGen.BranchFalse(loopExit); .)
+    WEAK ";"
+    AssignmentOrCall
+    ")"
+    Statement<frame, loopExit>               (. CodeGen.Branch(loopStart);
+                                                loopExit.Here(); .)
+  .
   HaltStatement
   =  "halt"
      [ "(" [ WriteList ] ")" ]               (. CodeGen.LeaveProgram(); .)
@@ -368,9 +387,9 @@ PRODUCTIONS
     WEAK ";"
   .
 
-  BreakStatement
+  BreakStatement<Label Lb>
   = "break"
-    WEAK ";"
+    WEAK ";"                                 (. CodeGen.Branch(Lb); .)
   .
 
   ReadStatement

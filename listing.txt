@@ -2,6 +2,7 @@
   Warning: Arguments is deletable
   LL1 warning in IfStatement: "else" is the start & successor of a deletable structure
   LL1 warning in IfStatement: "elseif" is the start & successor of a deletable structure
+  LL1 warning in ForStatement: identifier is the start of several alternatives
   LL1 warning in ElseIfStatement: "else" is the start & successor of a deletable structure
   LL1 warning in ElseIfStatement: "elseif" is the start & successor of a deletable structure
 
@@ -181,421 +182,440 @@
  174      Ident<out param.name>                   (. Table.Insert(param); .)
  175   .
  176 
- 177   Body<StackFrame frame>                     (. Label DSPLabel = new Label(known);
- 178                                                 int sizeMark = frame.size;
- 179                                                 CodeGen.OpenStackFrame(0); .)
- 180   =  "{" { Statement<frame> }
- 181      WEAK "}"                                (. CodeGen.FixDSP(DSPLabel.Address(), frame.size - sizeMark);
- 182                                                 CodeGen.LeaveVoidFunction(); .)
- 183 .
- 184 
- 185   Statement<StackFrame frame>
- 186   =  SYNC (   Block<frame>
- 187             | ConstDeclarations
- 188             | VarDeclarations<frame>
- 189             | AssignmentOrCall
- 190             | IfStatement<frame>
- 191             | WhileStatement<frame>
- 192 			| DoWhileStm<frame>
- 193             | HaltStatement
- 194             | ReturnStatement
- 195             | BreakStatement
- 196             | ReadStatement
- 197             | WriteStatement
- 198             | ";"                            (. Warning("possible unintended empty statement"); .)
- 199           ) .
- 200 
- 201   Block<StackFrame frame>
- 202   =                                          (. Table.OpenScope();
- 203                                                 bool empty = true;  .)
- 204      "{" { Statement<frame> }                (. empty = false; .)
- 205      WEAK "}"                                (. if (empty) Warning("possible unintended empty block");
- 206                                                 Table.CloseScope(); .)
- 207   .
- 208 
- 209   ConstDeclarations
- 210   = "const" OneConst { WEAK "," OneConst }
- 211     WEAK ";"
- 212   .
- 213 
- 214   OneConst                                   (. Entry constant = new Entry();
- 215                                                 ConstRec con; .)
- 216   =  Ident<out constant.name>                (. constant.kind = Kinds.Con; .)
- 217      AssignOp Constant<out con>              (. constant.value = con.value;
- 218                                                 constant.type = con.type;
- 219                                                 Table.Insert(constant); .)
- 220   .
- 221 
- 222   Constant<out ConstRec con>                 (. con = new ConstRec(); .)
- 223   =   IntConst<out con.value>                (. con.type = Types.intType; .)
- 224     | CharConst<out con.value>               (. con.type = Types.intType; .)
- 225     | "true"                                 (. con.type = Types.boolType; con.value = 1; .)
- 226     | "false"                                (. con.type = Types.boolType; con.value = 0; .)
- 227     | "null"                                 (. con.type = Types.nullType; con.value = 0; .)
- 228   .
- 229 
- 230   VarDeclarations<StackFrame frame>          (. int type; .)
- 231   =  Type<out type>                          
- 232      VarList<frame, type>
- 233      WEAK ";"
- 234   .
- 235 
- 236   Type<out int type>                         
- 237   =   BasicType<out type>
- 238        [ "[]"                                (. type++; .)
- 239        ] .
- 240 
- 241   BasicType<out int type>                    (. type = Types.noType; .)
- 242   =   "int"                                  (. type = Types.intType; .)
- 243     | "bool"                                 (. type = Types.boolType; .)
- 244   .
- 245 
- 246 
- 247   VarList<StackFrame frame, int type>
- 248   =  OneVar<frame, type>
- 249      { WEAK "," OneVar<frame, type> }
- 250   .
- 251 
- 252   OneVar<StackFrame frame, int type>         (. int expType;
- 253                                                 Entry var = new Entry(); .)
- 254   =  Ident<out var.name>                     (. var.kind = Kinds.Var;
- 255                                                 var.type = type;
- 256                                                 var.offset = frame.size;
- 257                                                 frame.size++; .)
- 258      [ AssignOp                              (. CodeGen.LoadAddress(var); .)
- 259        Expression<out expType>               (. if (!Assignable(var.type, expType))
- 260                                                   SemError("incompatible types in assignment");
- 261                                                 progState = 1;
- 262                                                 CodeGen.Assign(var.type); .)
- 263      ]                                       (. Table.Insert(var); .)
- 264   .
- 265 
- 266 
- 267   AssignmentOrCall                           (. int expType;
- 268                                                 DesType des; .)
- 269   =  (  IF (IsCall(out des))                    // /* use resolver to handle LL(1) conflict */
- 270          identifier                          (. CodeGen.FrameHeader(); .)
- 271          "(" Arguments<des> ")"              (. CodeGen.Call(des.entry.entryPoint); .)
- 272       |  Designator<out des>                 (. if (des.entry.kind != Kinds.Var)
- 273                                                   SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]); 
- 274                                                 progState = 1; .)
- 275          AssignOp
- 276          Expression<out expType>             (. if (!Assignable(des.type, expType))
- 277                                                   SemError("incompatible types in assignment");
- 278                                                 progState = 1;
- 279                                                 CodeGen.Assign(des.type); .)
- 280      ) WEAK ";"
- 281   .
- 282 
- 283   Arguments<DesType des>                     (. int argCount = 0;
- 284                                                 Entry fp = des.entry.firstParam; .)
- 285   =  [ OneArg<fp>                            (. argCount++; if (fp != null) fp = fp.nextInScope; .)
- 286        { WEAK "," OneArg<fp>                 (. argCount++; if (fp != null) fp = fp.nextInScope;.)
- 287        }
- 288      ]                                       (. if (argCount != des.entry.nParams)
- 289                                                   SemError("wrong number of arguments"); 
- 290                                                 progState = 1; .)
- 291   .
- 292 
- 293   OneArg<Entry fp>                           (. int argType; .)
- 294   =  (  Expression<out argType>              (. if (fp != null && !Assignable(fp.type, argType))
- 295                                                   SemError("argument type mismatch"); 
- 296                                                 progState = 1; .)
- 297      )
- 298   .
- 299 
- 300   Designator<out DesType des>                (. string name;
- 301                                                 int indexType; .)
- 302   =  Ident<out name>                         (. Entry entry = Table.Find(name);
- 303                                                 if (!entry.declared)
- 304                                                   SemError("undeclared identifier");
- 305                                                 progState = 1;
- 306                                                 des = new DesType(entry);
- 307                                                 if (entry.kind == Kinds.Var)
- 308                                                   CodeGen.LoadAddress(entry); .)
- 309      [     "["                               (. if (IsArray(des.type)) des.type--;
- 310                                                 else { SemError("unexpected subscript");
- 311                                                   progState = 1; }
- 312                                                 if (des.entry.kind != Kinds.Var) {
- 313                                                   SemError("unexpected subscript");
+ 177   Body<StackFrame frame>                     (. Label Lbend = new Label(!known); 
+ 178                                                 Label DSPLabel = new Label(known);
+ 179                                                 int sizeMark = frame.size;
+ 180                                                 CodeGen.OpenStackFrame(0); .)
+ 181   =  "{" { Statement<frame, Lbend> }
+ 182      WEAK "}"                                (. CodeGen.FixDSP(DSPLabel.Address(), frame.size - sizeMark);
+ 183                                                 Lbend.Here();
+ 184 												CodeGen.LeaveVoidFunction(); .)
+ 185 .                                        
+ 186 
+ 187   Statement<StackFrame frame, Label label>
+ 188   =  SYNC (   Block<frame, label>
+ 189             | ConstDeclarations
+ 190             | VarDeclarations<frame>
+ 191             | AssignmentOrCall
+ 192             | IfStatement<frame, label>
+ 193             | WhileStatement<frame>
+ 194 			| DoWhileStatment<frame>
+ 195 			| ForStatement<frame>
+ 196             | HaltStatement
+ 197             | ReturnStatement
+ 198             | BreakStatement<label>
+ 199             | ReadStatement
+ 200             | WriteStatement
+ 201             | ";"                            (. Warning("possible unintended empty statement"); .)
+ 202           ) .
+ 203 
+ 204   Block<StackFrame frame, Label Lbend>
+ 205   =                                          (. Table.OpenScope();
+ 206                                                 bool empty = true;  .)
+ 207      "{" { Statement<frame, Lbend> }                (. empty = false; .)
+ 208      WEAK "}"                                (. if (empty) Warning("possible unintended empty block");
+ 209                                                 Table.CloseScope(); .)
+ 210   .
+ 211 
+ 212   ConstDeclarations
+ 213   = "const" OneConst { WEAK "," OneConst }
+ 214     WEAK ";"
+ 215   .
+ 216 
+ 217   OneConst                                   (. Entry constant = new Entry();
+ 218                                                 ConstRec con; .)
+ 219   =  Ident<out constant.name>                (. constant.kind = Kinds.Con; .)
+ 220      AssignOp Constant<out con>              (. constant.value = con.value;
+ 221                                                 constant.type = con.type;
+ 222                                                 Table.Insert(constant); .)
+ 223   .
+ 224 
+ 225   Constant<out ConstRec con>                 (. con = new ConstRec(); .)
+ 226   =   IntConst<out con.value>                (. con.type = Types.intType; .)
+ 227     | CharConst<out con.value>               (. con.type = Types.intType; .)
+ 228     | "true"                                 (. con.type = Types.boolType; con.value = 1; .)
+ 229     | "false"                                (. con.type = Types.boolType; con.value = 0; .)
+ 230     | "null"                                 (. con.type = Types.nullType; con.value = 0; .)
+ 231   .
+ 232 
+ 233   VarDeclarations<StackFrame frame>          (. int type; .)
+ 234   =  Type<out type>                          
+ 235      VarList<frame, type>
+ 236      WEAK ";"
+ 237   .
+ 238 
+ 239   Type<out int type>                         
+ 240   =   BasicType<out type>
+ 241        [ "[]"                                (. type++; .)
+ 242        ] .
+ 243 
+ 244   BasicType<out int type>                    (. type = Types.noType; .)
+ 245   =   "int"                                  (. type = Types.intType; .)
+ 246     | "bool"                                 (. type = Types.boolType; .)
+ 247   .
+ 248 
+ 249 
+ 250   VarList<StackFrame frame, int type>
+ 251   =  OneVar<frame, type>
+ 252      { WEAK "," OneVar<frame, type> }
+ 253   .
+ 254 
+ 255   OneVar<StackFrame frame, int type>         (. int expType;
+ 256                                                 Entry var = new Entry(); .)
+ 257   =  Ident<out var.name>                     (. var.kind = Kinds.Var;
+ 258                                                 var.type = type;
+ 259                                                 var.offset = frame.size;
+ 260                                                 frame.size++; .)
+ 261      [ AssignOp                              (. CodeGen.LoadAddress(var); .)
+ 262        Expression<out expType>               (. if (!Assignable(var.type, expType))
+ 263                                                   SemError("incompatible types in assignment");
+ 264                                                 progState = 1;
+ 265                                                 CodeGen.Assign(var.type); .)
+ 266      ]                                       (. Table.Insert(var); .)
+ 267   .
+ 268 
+ 269 
+ 270   AssignmentOrCall                           (. int expType;
+ 271                                                 DesType des; .)
+ 272   =  (  IF (IsCall(out des))                    // /* use resolver to handle LL(1) conflict */
+ 273          identifier                          (. CodeGen.FrameHeader(); .)
+ 274          "(" Arguments<des> ")"              (. CodeGen.Call(des.entry.entryPoint); .)
+ 275       |  Designator<out des>                 (. if (des.entry.kind != Kinds.Var)
+ 276                                                   SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]); 
+ 277                                                 progState = 1; .)
+ 278          AssignOp
+ 279          Expression<out expType>             (. if (!Assignable(des.type, expType))
+ 280                                                   SemError("incompatible types in assignment");
+ 281                                                 progState = 1;
+ 282                                                 CodeGen.Assign(des.type); .)
+ 283      ) WEAK ";"
+ 284   .
+ 285 
+ 286   Arguments<DesType des>                     (. int argCount = 0;
+ 287                                                 Entry fp = des.entry.firstParam; .)
+ 288   =  [ OneArg<fp>                            (. argCount++; if (fp != null) fp = fp.nextInScope; .)
+ 289        { WEAK "," OneArg<fp>                 (. argCount++; if (fp != null) fp = fp.nextInScope;.)
+ 290        }
+ 291      ]                                       (. if (argCount != des.entry.nParams)
+ 292                                                   SemError("wrong number of arguments"); 
+ 293                                                 progState = 1; .)
+ 294   .
+ 295 
+ 296   OneArg<Entry fp>                           (. int argType; .)
+ 297   =  (  Expression<out argType>              (. if (fp != null && !Assignable(fp.type, argType))
+ 298                                                   SemError("argument type mismatch"); 
+ 299                                                 progState = 1; .)
+ 300      )
+ 301   .
+ 302 
+ 303   Designator<out DesType des>                (. string name;
+ 304                                                 int indexType; .)
+ 305   =  Ident<out name>                         (. Entry entry = Table.Find(name);
+ 306                                                 if (!entry.declared)
+ 307                                                   SemError("undeclared identifier");
+ 308                                                 progState = 1;
+ 309                                                 des = new DesType(entry);
+ 310                                                 if (entry.kind == Kinds.Var)
+ 311                                                   CodeGen.LoadAddress(entry); .)
+ 312      [     "["                               (. if (IsArray(des.type)) des.type--;
+ 313                                                 else { SemError("unexpected subscript");
  314                                                   progState = 1; }
- 315                                                 CodeGen.Dereference(); .)
- 316               Expression<out indexType>      (. if (!IsArith(indexType)) {
- 317                                                   SemError("invalid subscript type");
- 318                                                 progState = 1; }
- 319                                                 CodeGen.Index(); .)
- 320            "]"
- 321      ]
- 322   .
- 323 
- 324   IfStatement<StackFrame frame>
- 325                                              (. Label falseLabel = new Label(!known),
- 326                                                         endElse = new Label(!known); .)
- 327   =  "if" "(" Condition ")"                  (. CodeGen.BranchFalse(falseLabel); .)
- 328         ["then"] Statement<frame>            (. CodeGen.Branch(endElse);
- 329                                                 falseLabel.Here(); .)
- 330      [ "else" Statement<frame>
- 331      | ElseIfStatement<frame> ]              (. endElse.Here(); .)
- 332   .
- 333 
- 334   ElseIfStatement<StackFrame frame>
- 335                                              (. Label falseLabel = new Label(!known),
- 336                                                         endElse = new Label(!known); .)
- 337   =  "elseif" "(" Condition ")"              (. CodeGen.BranchFalse(falseLabel); .)
- 338         ["then"] Statement<frame>            (. CodeGen.Branch(endElse);
- 339                                                 falseLabel.Here(); .)
- 340      [ "else" Statement<frame>
- 341      | ElseIfStatement<frame> ]              (. endElse.Here(); .)
- 342   .
- 343 
- 344   WhileStatement<StackFrame frame>
- 345                                              (. Label loopExit  = new Label(!known);
- 346                                                 Label loopStart = new Label(known); .)
- 347   =  "while" "(" Condition ")"               (. CodeGen.BranchFalse(loopExit); .)
- 348      Statement<frame>                        (. CodeGen.Branch(loopStart);
- 349                                                 loopExit.Here(); .)
- 350   .
- 351   
- 352   DoWhileStm<StackFrame frame>
- 353                                              (. Label loopExit  = new Label(!known); 
- 354                                                 Label loopStart = new Label(known); .)
- 355   = "do" Statement<frame>
- 356     "while" "(" Condition ")"                (. CodeGen.BranchFalse(loopExit); .)
- 357                                              (. CodeGen.Branch(loopStart); .)
- 358 											 (. loopExit.Here(); .)
- 359  .
- 360   HaltStatement
- 361   =  "halt"
- 362      [ "(" [ WriteList ] ")" ]               (. CodeGen.LeaveProgram(); .)
- 363      WEAK ";"
- 364   .
- 365 
- 366   ReturnStatement
- 367   =  "return"                                (. CodeGen.LeaveVoidFunction(); .)
- 368     WEAK ";"
- 369   .
- 370 
- 371   BreakStatement
- 372   = "break"
+ 315                                                 if (des.entry.kind != Kinds.Var) {
+ 316                                                   SemError("unexpected subscript");
+ 317                                                   progState = 1; }
+ 318                                                 CodeGen.Dereference(); .)
+ 319               Expression<out indexType>      (. if (!IsArith(indexType)) {
+ 320                                                   SemError("invalid subscript type");
+ 321                                                 progState = 1; }
+ 322                                                 CodeGen.Index(); .)
+ 323            "]"
+ 324      ]
+ 325   .
+ 326 
+ 327   IfStatement<StackFrame frame, Label endBlock>
+ 328                                              (. Label falseLabel = new Label(!known),
+ 329                                                         endElse = new Label(!known); .)
+ 330   =  "if" "(" Condition ")"                  (. CodeGen.BranchFalse(falseLabel); .)
+ 331         ["then"] Statement<frame, endBlock>  (.   CodeGen.Branch(endElse);
+ 332                                                 falseLabel.Here(); .)
+ 333      [ "else" Statement<frame, endBlock>
+ 334      | ElseIfStatement<frame, endBlock> ]    (. endElse.Here(); .)
+ 335   .
+ 336 
+ 337   ElseIfStatement<StackFrame frame, Label endBlock>
+ 338                                              (. Label falseLabel = new Label(!known),
+ 339                                                         endElse = new Label(!known); .)
+ 340   =  "elseif" "(" Condition ")"              (. CodeGen.BranchFalse(falseLabel); .)
+ 341         ["then"] Statement<frame, endBlock>  (. CodeGen.Branch(endElse);
+ 342                                                 falseLabel.Here(); .)
+ 343      [ "else" Statement<frame, endBlock>
+ 344      | ElseIfStatement<frame, endBlock> ]    (. endElse.Here(); .)
+ 345   .
+ 346 
+ 347   WhileStatement<StackFrame frame>
+ 348                                              (. Label loopExit  = new Label(!known);
+ 349                                                 Label loopStart = new Label(known); .)
+ 350   =  "while" "(" Condition ")"               (. CodeGen.BranchFalse(loopExit); .)
+ 351      Statement<frame, loopExit>              (. CodeGen.Branch(loopStart);
+ 352                                                 loopExit.Here(); .)
+ 353   .
+ 354   
+ 355   DoWhileStatment<StackFrame frame>
+ 356                                              (. Label loopExit  = new Label(!known); 
+ 357                                                 Label loopStart = new Label(known); .)
+ 358   = "do" Statement<frame, loopExit>
+ 359     "while" "(" Condition ")"                (. CodeGen.BranchFalse(loopExit); .)
+ 360                                              (. CodeGen.Branch(loopStart); .)
+ 361 											 (. loopExit.Here(); .)
+ 362  .
+ 363  
+ 364   ForStatement<StackFrame frame>
+ 365                                              (. Label loopExit  = new Label(!known); 
+ 366                                                 Label loopStart = new Label(!known); .)
+ 367   = "for" "("                                (. string name = ""; .)
+ 368     ( AssignmentOrCall    
+ 369     | Ident<out name> WEAK ";"               (. if(Table.Find(name) == null) SemError("Undeclared Identifier: " + name); .)
+ 370     | VarDeclarations<frame> )
+ 371                                              (. loopStart.Here(); .)
+ 372     Condition                                (. CodeGen.BranchFalse(loopExit); .)
  373     WEAK ";"
- 374   .
- 375 
- 376   ReadStatement
- 377   = (   "read"     "("   ReadList   ")"
- 378       | "readLine" "(" [ ReadList ] ")"      (. CodeGen.ReadLine(); .)
- 379     )
- 380     WEAK ";"
- 381   .
- 382 
- 383   ReadList
- 384   = ReadElement { WEAK "," ReadElement }
- 385   .
- 386 
- 387   ReadElement                                (. string str;
- 388                                                 DesType des; .)
- 389   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
- 390     | Designator<out des>                    (. if (des.entry.kind != Kinds.Var) {
- 391                                                   SemError("wrong kind of identifier");
- 392                                                   progState = 1; }
- 393                                                 switch (des.type) {
- 394                                                   case Types.intType:
- 395                                                   case Types.boolType:
- 396                                                     CodeGen.Read(des.type); break;
- 397                                                   default:
- 398                                                     SemError("cannot read this type"); progState = 1; break;
- 399                                                 } .)
+ 374     AssignmentOrCall
+ 375     ")"
+ 376     Statement<frame, loopExit>               (. CodeGen.Branch(loopStart);
+ 377                                                 loopExit.Here(); .)
+ 378   .
+ 379   HaltStatement
+ 380   =  "halt"
+ 381      [ "(" [ WriteList ] ")" ]               (. CodeGen.LeaveProgram(); .)
+ 382      WEAK ";"
+ 383   .
+ 384 
+ 385   ReturnStatement
+ 386   =  "return"                                (. CodeGen.LeaveVoidFunction(); .)
+ 387     WEAK ";"
+ 388   .
+ 389 
+ 390   BreakStatement<Label Lb>
+ 391   = "break"
+ 392     WEAK ";"                                 (. CodeGen.Branch(Lb); .)
+ 393   .
+ 394 
+ 395   ReadStatement
+ 396   = (   "read"     "("   ReadList   ")"
+ 397       | "readLine" "(" [ ReadList ] ")"      (. CodeGen.ReadLine(); .)
+ 398     )
+ 399     WEAK ";"
  400   .
  401 
- 402   WriteStatement
- 403   = (   "write"     "("   WriteList   ")"
- 404       | "writeLine" "(" [ WriteList ] ")"    (. CodeGen.WriteLine(); .)
- 405     )
- 406     WEAK ";"
- 407   .
- 408 
- 409   WriteList
- 410   = WriteElement { WEAK "," WriteElement }
- 411   .
- 412 
- 413   WriteElement                               (. int expType;
- 414                                                 string str; .)
- 415   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
- 416     | Expression<out expType>                (. if (!(IsArith(expType) || expType == Types.boolType)) {
- 417                                                   SemError("cannot write this type"); progState = 1; }
- 418                                                 switch (expType) {
- 419                                                   case Types.intType:
- 420                                                   case Types.boolType:
- 421                                                     CodeGen.Write(expType); break;
- 422                                                   default:
- 423                                                     break;
- 424                                                 } .)
- 425   .
- 426 
- 427   Condition                                  (. int type; .)
- 428   =  Expression<out type>                    (. if (!IsBool(type)) {
- 429                                                   SemError("Boolean expression needed"); progState = 1; } .)
+ 402   ReadList
+ 403   = ReadElement { WEAK "," ReadElement }
+ 404   .
+ 405 
+ 406   ReadElement                                (. string str;
+ 407                                                 DesType des; .)
+ 408   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
+ 409     | Designator<out des>                    (. if (des.entry.kind != Kinds.Var) {
+ 410                                                   SemError("wrong kind of identifier");
+ 411                                                   progState = 1; }
+ 412                                                 switch (des.type) {
+ 413                                                   case Types.intType:
+ 414                                                   case Types.boolType:
+ 415                                                     CodeGen.Read(des.type); break;
+ 416                                                   default:
+ 417                                                     SemError("cannot read this type"); progState = 1; break;
+ 418                                                 } .)
+ 419   .
+ 420 
+ 421   WriteStatement
+ 422   = (   "write"     "("   WriteList   ")"
+ 423       | "writeLine" "(" [ WriteList ] ")"    (. CodeGen.WriteLine(); .)
+ 424     )
+ 425     WEAK ";"
+ 426   .
+ 427 
+ 428   WriteList
+ 429   = WriteElement { WEAK "," WriteElement }
  430   .
  431 
- 432   Expression<out int type>                   (. int type2;
- 433                                                 int op;
- 434                                                 bool comparable; .)
- 435   =  AddExp<out type>
- 436      [ RelOp<out op> AddExp<out type2>       (. switch (op) {
- 437                                                   case CodeGen.ceq: case CodeGen.cne:
- 438                                                     comparable = Compatible(type, type2);
- 439                                                     break;
- 440                                                   default:
- 441                                                     comparable = IsArith(type) && IsArith(type2);
+ 432   WriteElement                               (. int expType;
+ 433                                                 string str; .)
+ 434   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
+ 435     | Expression<out expType>                (. if (!(IsArith(expType) || expType == Types.boolType)) {
+ 436                                                   SemError("cannot write this type"); progState = 1; }
+ 437                                                 switch (expType) {
+ 438                                                   case Types.intType:
+ 439                                                   case Types.boolType:
+ 440                                                     CodeGen.Write(expType); break;
+ 441                                                   default:
  442                                                     break;
- 443                                                 }
- 444                                                 if (!comparable) {
- 445                                                   SemError("incomparable operands");
- 446                                                   progState = 1; }
- 447                                                 type = Types.boolType; CodeGen.Comparison(op); .)
- 448      ]
+ 443                                                 } .)
+ 444   .
+ 445 
+ 446   Condition                                  (. int type; .)
+ 447   =  Expression<out type>                    (. if (!IsBool(type)) {
+ 448                                                   SemError("Boolean expression needed"); progState = 1; } .)
  449   .
  450 
- 451   AddExp<out int type>                       (. int type2;
+ 451   Expression<out int type>                   (. int type2;
  452                                                 int op;
- 453                                                 Label shortcircuit = new Label(!known); .)
- 454   =                                          (. type = Types.noType; .)
- 455      (   "+" Term<out type>                  (. if (!IsArith(type)) {
- 456                                                   SemError("arithmetic operand needed"); 
- 457                                                   progState = 1; } .)
- 458        | "-" Term<out type>                  (. if (!IsArith(type)) {
- 459                                                   SemError("arithmetic operand needed");
- 460                                                   progState = 1; }
- 461                                                 CodeGen.NegateInteger(); .)
- 462        | Term<out type>
- 463      )
- 464      { AddOp<out op>                         (. if (op == CodeGen.or)
- 465                                                   CodeGen.BooleanOp(shortcircuit, CodeGen.or); .)
- 466        Term<out type2>                       (. switch (op) {
- 467                                                   case CodeGen.or:
- 468                                                     if (!IsBool(type) || !IsBool(type2)) {
- 469                                                       SemError("boolean operands needed"); 
- 470                                                       progState = 1; }
- 471                                                     type = Types.boolType;
- 472                                                     break;
- 473                                                   default:
- 474                                                     if (!IsArith(type) || !IsArith(type2)) {
- 475                                                       SemError("arithmetic operands needed");
- 476                                                       type = Types.noType;
- 477                                                       progState = 1;
- 478                                                     }
- 479                                                     CodeGen.BinaryOp(op);
- 480                                                     break;
- 481                                                 } .)
- 482      }                                       (. shortcircuit.Here(); .)
- 483   .
- 484 
- 485   Term<out int type>                         (. int type2;
- 486                                                 int op;
- 487                                                 Label shortcircuit = new Label(!known); .)
- 488   =  Factor<out type>
- 489      { MulOp<out op>                         (. if (op == CodeGen.and)
- 490                                                   CodeGen.BooleanOp(shortcircuit, CodeGen.and); .)
- 491        Factor<out type2>                     (. switch (op) {
- 492                                                   case CodeGen.and:
- 493                                                     if (!IsBool(type) || !IsBool(type2)) {
- 494                                                       SemError("boolean operands needed"); progState = 1; }
- 495                                                     type = Types.boolType;
- 496                                                     break;
- 497                                                   default:
- 498                                                     if (!IsArith(type) || !IsArith(type2)) {
- 499                                                       SemError("arithmetic operands needed");
- 500                                                       type = Types.noType;
- 501                                                       progState = 1;
- 502                                                     }
- 503                                                     CodeGen.BinaryOp(op);
- 504                                                     break;
- 505                                                 } .)
- 506      }                                       (. shortcircuit.Here(); .)
- 507   .
- 508 
- 509   Factor<out int type>                       (. type = Types.noType;
- 510                                                 int size;
- 511                                                 DesType des;
- 512                                                 ConstRec con; .)
- 513   =    Designator<out des>                   (. type = des.type;
- 514                                                 switch (des.entry.kind) {
- 515                                                   case Kinds.Var:
- 516                                                     CodeGen.Dereference();
- 517                                                     break;
- 518                                                   case Kinds.Con:
- 519                                                     CodeGen.LoadConstant(des.entry.value);
- 520                                                     break;
- 521                                                   default:
- 522                                                     SemError("wrong kind of identifier");
- 523                                                     progState = 1;
- 524                                                     break;
- 525                                                 } .)
- 526                                         
- 527      | Constant<out con>                     (. type = con.type;
- 528                                                 CodeGen.LoadConstant(con.value); .)
- 529      | "new" BasicType<out type>             (. type++; .)
- 530          "[" Expression<out size>            (. if (!IsArith(size)){
- 531                                                   SemError("array size must be integer");
- 532                                                   progState = 1; }
- 533                                                 CodeGen.Allocate(); .)
- 534          "]"
- 535      | "!" Factor<out type>                  (. if (!IsBool(type)) { SemError("boolean operand needed"); progState = 1; } 
- 536                                                 else CodeGen.NegateBoolean();
- 537                                                 type = Types.boolType; .)
- 538      | "(" Expression<out type> ")"
- 539   .
- 540 
- 541   AddOp<out int op>                          (. op = CodeGen.nop; .)
- 542   =    "+"                                   (. op = CodeGen.add; .)
- 543      | "-"                                   (. op = CodeGen.sub; .)
- 544      | "||"                                  (. op = CodeGen.or;  .)
- 545   .
- 546 
- 547   MulOp<out int op>                          (. op = CodeGen.nop; .)
- 548   =    "*"                                   (. op = CodeGen.mul; .)
- 549      | "/"                                   (. op = CodeGen.div; .)
- 550      | "%"                                   (. op = CodeGen.rem; .)
- 551      | "&&"                                  (. op = CodeGen.and; .)
- 552   .
- 553 
- 554   RelOp<out int op>                          (. op = CodeGen.nop; .)
- 555   =    "=="                                  (. op = CodeGen.ceq; .)
- 556      | "!="                                  (. op = CodeGen.cne; .)
- 557      | "<"                                   (. op = CodeGen.clt; .)
- 558      | "<="                                  (. op = CodeGen.cle; .)
- 559      | ">"                                   (. op = CodeGen.cgt; .)
- 560      | ">="                                  (. op = CodeGen.cge; .)
- 561   .
- 562 
- 563   AssignOp = "=" .
- 564 
- 565   Ident<out string name>
- 566   =  identifier                              (. name = token.val; .)
- 567   .
- 568 
- 569   StringConst<out string str>
- 570   =  stringLit                               (. str = token.val; .)
- 571      { ["+"] stringLit                       (. str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1); .)
- 572      }
- 573                                              (. str = Unescape(str.Substring(1, str.Length - 2)); .)
- 574   .
- 575 
- 576   CharConst<out int value>
- 577   =  charLit                                 (. string str = token.val;
- 578                                                 str = Unescape(str.Substring(1, str.Length - 2));
- 579                                                 value = str[0]; .)
+ 453                                                 bool comparable; .)
+ 454   =  AddExp<out type>
+ 455      [ RelOp<out op> AddExp<out type2>       (. switch (op) {
+ 456                                                   case CodeGen.ceq: case CodeGen.cne:
+ 457                                                     comparable = Compatible(type, type2);
+ 458                                                     break;
+ 459                                                   default:
+ 460                                                     comparable = IsArith(type) && IsArith(type2);
+ 461                                                     break;
+ 462                                                 }
+ 463                                                 if (!comparable) {
+ 464                                                   SemError("incomparable operands");
+ 465                                                   progState = 1; }
+ 466                                                 type = Types.boolType; CodeGen.Comparison(op); .)
+ 467      ]
+ 468   .
+ 469 
+ 470   AddExp<out int type>                       (. int type2;
+ 471                                                 int op;
+ 472                                                 Label shortcircuit = new Label(!known); .)
+ 473   =                                          (. type = Types.noType; .)
+ 474      (   "+" Term<out type>                  (. if (!IsArith(type)) {
+ 475                                                   SemError("arithmetic operand needed"); 
+ 476                                                   progState = 1; } .)
+ 477        | "-" Term<out type>                  (. if (!IsArith(type)) {
+ 478                                                   SemError("arithmetic operand needed");
+ 479                                                   progState = 1; }
+ 480                                                 CodeGen.NegateInteger(); .)
+ 481        | Term<out type>
+ 482      )
+ 483      { AddOp<out op>                         (. if (op == CodeGen.or)
+ 484                                                   CodeGen.BooleanOp(shortcircuit, CodeGen.or); .)
+ 485        Term<out type2>                       (. switch (op) {
+ 486                                                   case CodeGen.or:
+ 487                                                     if (!IsBool(type) || !IsBool(type2)) {
+ 488                                                       SemError("boolean operands needed"); 
+ 489                                                       progState = 1; }
+ 490                                                     type = Types.boolType;
+ 491                                                     break;
+ 492                                                   default:
+ 493                                                     if (!IsArith(type) || !IsArith(type2)) {
+ 494                                                       SemError("arithmetic operands needed");
+ 495                                                       type = Types.noType;
+ 496                                                       progState = 1;
+ 497                                                     }
+ 498                                                     CodeGen.BinaryOp(op);
+ 499                                                     break;
+ 500                                                 } .)
+ 501      }                                       (. shortcircuit.Here(); .)
+ 502   .
+ 503 
+ 504   Term<out int type>                         (. int type2;
+ 505                                                 int op;
+ 506                                                 Label shortcircuit = new Label(!known); .)
+ 507   =  Factor<out type>
+ 508      { MulOp<out op>                         (. if (op == CodeGen.and)
+ 509                                                   CodeGen.BooleanOp(shortcircuit, CodeGen.and); .)
+ 510        Factor<out type2>                     (. switch (op) {
+ 511                                                   case CodeGen.and:
+ 512                                                     if (!IsBool(type) || !IsBool(type2)) {
+ 513                                                       SemError("boolean operands needed"); progState = 1; }
+ 514                                                     type = Types.boolType;
+ 515                                                     break;
+ 516                                                   default:
+ 517                                                     if (!IsArith(type) || !IsArith(type2)) {
+ 518                                                       SemError("arithmetic operands needed");
+ 519                                                       type = Types.noType;
+ 520                                                       progState = 1;
+ 521                                                     }
+ 522                                                     CodeGen.BinaryOp(op);
+ 523                                                     break;
+ 524                                                 } .)
+ 525      }                                       (. shortcircuit.Here(); .)
+ 526   .
+ 527 
+ 528   Factor<out int type>                       (. type = Types.noType;
+ 529                                                 int size;
+ 530                                                 DesType des;
+ 531                                                 ConstRec con; .)
+ 532   =    Designator<out des>                   (. type = des.type;
+ 533                                                 switch (des.entry.kind) {
+ 534                                                   case Kinds.Var:
+ 535                                                     CodeGen.Dereference();
+ 536                                                     break;
+ 537                                                   case Kinds.Con:
+ 538                                                     CodeGen.LoadConstant(des.entry.value);
+ 539                                                     break;
+ 540                                                   default:
+ 541                                                     SemError("wrong kind of identifier");
+ 542                                                     progState = 1;
+ 543                                                     break;
+ 544                                                 } .)
+ 545                                         
+ 546      | Constant<out con>                     (. type = con.type;
+ 547                                                 CodeGen.LoadConstant(con.value); .)
+ 548      | "new" BasicType<out type>             (. type++; .)
+ 549          "[" Expression<out size>            (. if (!IsArith(size)){
+ 550                                                   SemError("array size must be integer");
+ 551                                                   progState = 1; }
+ 552                                                 CodeGen.Allocate(); .)
+ 553          "]"
+ 554      | "!" Factor<out type>                  (. if (!IsBool(type)) { SemError("boolean operand needed"); progState = 1; } 
+ 555                                                 else CodeGen.NegateBoolean();
+ 556                                                 type = Types.boolType; .)
+ 557      | "(" Expression<out type> ")"
+ 558   .
+ 559 
+ 560   AddOp<out int op>                          (. op = CodeGen.nop; .)
+ 561   =    "+"                                   (. op = CodeGen.add; .)
+ 562      | "-"                                   (. op = CodeGen.sub; .)
+ 563      | "||"                                  (. op = CodeGen.or;  .)
+ 564   .
+ 565 
+ 566   MulOp<out int op>                          (. op = CodeGen.nop; .)
+ 567   =    "*"                                   (. op = CodeGen.mul; .)
+ 568      | "/"                                   (. op = CodeGen.div; .)
+ 569      | "%"                                   (. op = CodeGen.rem; .)
+ 570      | "&&"                                  (. op = CodeGen.and; .)
+ 571   .
+ 572 
+ 573   RelOp<out int op>                          (. op = CodeGen.nop; .)
+ 574   =    "=="                                  (. op = CodeGen.ceq; .)
+ 575      | "!="                                  (. op = CodeGen.cne; .)
+ 576      | "<"                                   (. op = CodeGen.clt; .)
+ 577      | "<="                                  (. op = CodeGen.cle; .)
+ 578      | ">"                                   (. op = CodeGen.cgt; .)
+ 579      | ">="                                  (. op = CodeGen.cge; .)
  580   .
  581 
- 582   IntConst<out int value>
- 583   =  number                                  (. try {
- 584                                                   value = Convert.ToInt32(token.val);
- 585                                                 } catch (Exception) {
- 586                                                   value = 0; SemError("number out of range"); progState = 1;
- 587                                                 } .)
- 588   .
- 589 
- 590 END Parva.
- 591 
+ 582   AssignOp = "=" .
+ 583 
+ 584   Ident<out string name>
+ 585   =  identifier                              (. name = token.val; .)
+ 586   .
+ 587 
+ 588   StringConst<out string str>
+ 589   =  stringLit                               (. str = token.val; .)
+ 590      { ["+"] stringLit                       (. str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1); .)
+ 591      }
+ 592                                              (. str = Unescape(str.Substring(1, str.Length - 2)); .)
+ 593   .
+ 594 
+ 595   CharConst<out int value>
+ 596   =  charLit                                 (. string str = token.val;
+ 597                                                 str = Unescape(str.Substring(1, str.Length - 2));
+ 598                                                 value = str[0]; .)
+ 599   .
+ 600 
+ 601   IntConst<out int value>
+ 602   =  number                                  (. try {
+ 603                                                   value = Convert.ToInt32(token.val);
+ 604                                                 } catch (Exception) {
+ 605                                                   value = 0; SemError("number out of range"); progState = 1;
+ 606                                                 } .)
+ 607   .
+ 608 
+ 609 END Parva.
+ 610 
 
 0 errors detected
-6 warnings detected
+7 warnings detected

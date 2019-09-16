@@ -840,10 +840,9 @@ public class Parser {
 	static void FancyFor(StackFrame frame) {
 		Label loopExit  = new Label(!known);
 		Label loopStart = new Label(!known);
-		string name = ""; Entry e; int cnt = 0, start = 0;
-		Entry i = new Entry(); i.value = 0; i.type = Types.intType;
-		i.offset = CodeGen.GetInitSP();
-		CodeGen.Push(i.value);
+		Label stmStart  = new Label(!known);
+		int cnt = 1, start = 0;
+		string name = ""; Entry e;
 		Ident(out name);
 		e = Table.Find(name);
 		if(e == null)
@@ -851,37 +850,27 @@ public class Parser {
 		Expect(in_Sym);
 		int exprType = Types.noType;
 		Expect(lparen_Sym);
-		if (StartOf(13)) {
+		
+		CodeGen.LoadAddress(e);
+		Expression(out exprType);
+		if (exprType != e.type) SemError("Type mismatch!");
+		CodeGen.Assign(exprType);
+		CodeGen.writeWord(PVM.jal);
+		CodeGen.writeWord(stmStart.Address());
+		while (la.kind == comma_Sym) {
+			Get();
+			CodeGen.LoadAddress(e);
 			Expression(out exprType);
 			if (exprType != e.type) SemError("Type mismatch!");
-			cnt++;
-			start = CodeGen.GetInitSP();
-			while (la.kind == comma_Sym) {
-				Get();
-				Expression(out exprType);
-				if (exprType != e.type) SemError("Type mismatch!");
-				cnt++;
-			}
+			CodeGen.Assign(exprType);
+			CodeGen.writeWord(PVM.jal);
+			CodeGen.writeWord(stmStart.Address());
 		}
+		CodeGen.Branch(loopExit);
 		Expect(rparen_Sym);
-		loopStart.Here();
-		CodeGen.LoadValue(i);
-		CodeGen.LoadConstant(cnt);
-		CodeGen.Comparison(CodeGen.clt);
-		CodeGen.BranchFalse(loopExit);
-		CodeGen.LoadAddress(e);
-		CodeGen.LoadConstant(start);
-		CodeGen.LoadValue(i);
-		CodeGen.BinaryOp(CodeGen.sub);
-		CodeGen.writeWord(PVM.ldv);
-		CodeGen.Assign(e.type);
+		stmStart.Here();
 		Statement(frame, loopExit);
-		CodeGen.LoadAddress(i);
-		CodeGen.LoadValue(i);
-		CodeGen.LoadConstant(1);
-		CodeGen.BinaryOp(CodeGen.add);
-		CodeGen.Assign(i.type);
-		CodeGen.Branch(loopStart);
+		CodeGen.writeWord(PVM.jra);
 		loopExit.Here();
 	}
 

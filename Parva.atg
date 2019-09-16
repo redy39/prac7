@@ -181,7 +181,7 @@ PRODUCTIONS
   =  "{" { Statement<frame, Lbend> }
      WEAK "}"                                (. CodeGen.FixDSP(DSPLabel.Address(), frame.size - sizeMark);
                                                 Lbend.Here();
-												CodeGen.LeaveVoidFunction(); .)
+                                                CodeGen.LeaveVoidFunction(); .)
 .                                        
 
   Statement<StackFrame frame, Label label>
@@ -191,8 +191,8 @@ PRODUCTIONS
             | AssignmentOrCall
             | IfStatement<frame, label>
             | WhileStatement<frame>
-			| DoWhileStatment<frame>
-			| ForStatement<frame>
+            | DoWhileStatment<frame>
+            | ForStatement<frame>
             | HaltStatement
             | ReturnStatement
             | BreakStatement<label>
@@ -358,7 +358,7 @@ PRODUCTIONS
   = "do" Statement<frame, loopExit>
     "while" "(" Condition ")"                (. CodeGen.BranchFalse(loopExit); .)
                                              (. CodeGen.Branch(loopStart); .)
-											 (. loopExit.Here(); .)
+                                             (. loopExit.Here(); .)
  .
  
   ForStatement<StackFrame frame>
@@ -382,8 +382,7 @@ PRODUCTIONS
     Statement<frame, loopExit>               (. CodeGen.Branch(loopStart); .)
                                              (. loopExit.Here(); .)
     .
-    
-    
+
     FancyFor<StackFrame frame>               (. Label loopExit  = new Label(!known); 
                                                 Label loopStart = new Label(!known);
                                                 Label stmStart  = new Label(!known); .)
@@ -399,25 +398,22 @@ PRODUCTIONS
                                              (. CodeGen.LoadAddress(e); .)
     Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!"); .)
                                              (. CodeGen.Assign(exprType); .)
-                                             (. .)
+                                             (. CodeGen.writeWord(PVM.jal); .)
+                                             (. CodeGen.writeWord(stmStart.Address()); .)
     
-    { ","                                    (. cnt++; .)
-                                             
+    { ","
+                                             (. CodeGen.LoadAddress(e); .)
     Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!"); .)
-                                             (.  .)
-    
-    }                                       
-    ")"                                      (. CodeGen.LoadConstant(cnt); .)
-                                             (. CodeGen.Allocate(); .)
-                                             (. stmStart.Here(); .)
-                                             
-                                             
-                                                
+                                             (. CodeGen.Assign(exprType); .)
+                                             (. CodeGen.writeWord(PVM.jal); .)
+                                             (. CodeGen.writeWord(stmStart.Address()); .)
+    }                                        (. CodeGen.Branch(loopExit); .)
+    ")"                                      (. stmStart.Here(); .)
     Statement<frame, loopExit>               
-                                             (. CodeGen.Branch(loopStart); .)                                        
+                                             (. CodeGen.writeWord(PVM.jra); .)
                                              (. loopExit.Here(); .)
   .
-  
+
   HaltStatement
   =  "halt"
      [ "(" [ WriteList ] ")" ]               (. CodeGen.LeaveProgram(); .)

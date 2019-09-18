@@ -67,6 +67,14 @@ COMPILER Parva $NC
     return (type % 2) == 1;
   } // IsArray
 
+  static bool IsChar(int type) {
+    return (type == Types.charType);
+  }
+  
+  static bool IsWritable(int type) {
+    return (type == Types.intType || type == Types.charType);
+  }
+
   static bool Compatible(int typeOne, int typeTwo) {
   // Returns true if typeOne is compatible (and comparable for equality) with typeTwo
     return    typeOne == typeTwo
@@ -224,7 +232,7 @@ PRODUCTIONS
 
   Constant<out ConstRec con>                 (. con = new ConstRec(); .)
   =   IntConst<out con.value>                (. con.type = Types.intType; .)
-    | CharConst<out con.value>               (. con.type = Types.intType; .)
+    | CharConst<out con.value>               (. con.type = Types.charType; .)
     | "true"                                 (. con.type = Types.boolType; con.value = 1; .)
     | "false"                                (. con.type = Types.boolType; con.value = 0; .)
     | "null"                                 (. con.type = Types.nullType; con.value = 0; .)
@@ -244,8 +252,8 @@ PRODUCTIONS
   BasicType<out int type>                    (. type = Types.noType; .)
   =   "int"                                  (. type = Types.intType; .)
     | "bool"                                 (. type = Types.boolType; .)
+    | "char"                                 (. type = Types.charType; .)
   .
-
 
   VarList<StackFrame frame, int type>
   =  OneVar<frame, type>
@@ -383,24 +391,18 @@ PRODUCTIONS
                                              (. loopExit.Here(); .)
     .
 
-    FancyFor<StackFrame frame>               (. Label loopExit  = new Label(!known); 
-                                                Label loopStart = new Label(!known);
+    FancyFor<StackFrame frame>               (. Label loopExit  = new Label(!known);
                                                 Label stmStart  = new Label(!known); .)
-        
-    =                                        (. int cnt = 1, start = 0; .)
-                                             (. string name = ""; Entry e; .)
-    Ident<out name>                          (. e = Table.Find(name); 
-                                                if(e == null) 
-                                                  SemError("Undeclared Identifier: " + name); .)
+    =                                        (. string name = ""; Entry e; .)
+    Ident<out name>                          (. e = Table.Find(name); .)
+                                             (. if(e == null) .)
+                                             (.   SemError("Undeclared Identifier: " + name); .)
     "in"                                     (. int exprType = Types.noType; .)
-    
-    "("                                     (.  .)
+    "("
                                              (. CodeGen.LoadAddress(e); .)
     Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!"); .)
                                              (. CodeGen.Assign(exprType); .)
-                                             (. CodeGen.writeWord(PVM.jal); .)
-                                             (. CodeGen.writeWord(stmStart.Address()); .)
-    
+                                             (. CodeGen.JumpAndLink(stmStart); .)
     { ","
                                              (. CodeGen.LoadAddress(e); .)
     Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!"); .)
@@ -409,8 +411,7 @@ PRODUCTIONS
                                              (. CodeGen.writeWord(stmStart.Address()); .)
     }                                        (. CodeGen.Branch(loopExit); .)
     ")"                                      (. stmStart.Here(); .)
-    Statement<frame, loopExit>               
-                                             (. CodeGen.writeWord(PVM.jra); .)
+    Statement<frame, loopExit>               (. CodeGen.JumpReturnAddress(); .)
                                              (. loopExit.Here(); .)
   .
 
@@ -449,6 +450,7 @@ PRODUCTIONS
                                                   progState = 1; }
                                                 switch (des.type) {
                                                   case Types.intType:
+                                                  case Types.charType:
                                                   case Types.boolType:
                                                     CodeGen.Read(des.type); break;
                                                   default:
@@ -470,11 +472,12 @@ PRODUCTIONS
   WriteElement                               (. int expType;
                                                 string str; .)
   =   StringConst<out str>                   (. CodeGen.WriteString(str); .)
-    | Expression<out expType>                (. if (!(IsArith(expType) || expType == Types.boolType)) {
+    | Expression<out expType>                (. if (!IsWritable(expType)) {
                                                   SemError("cannot write this type"); progState = 1; }
                                                 switch (expType) {
                                                   case Types.intType:
                                                   case Types.boolType:
+                                                  case Types.charType:
                                                     CodeGen.Write(expType); break;
                                                   default:
                                                     break;
@@ -526,6 +529,13 @@ PRODUCTIONS
                                                       SemError("boolean operands needed"); 
                                                       progState = 1; }
                                                     type = Types.boolType;
+                                                    break;
+                                                  case CodeGen.add:
+                                                    if((!IsArith(type) && !IsChar(type))
+                                                    || (!IsArith(type2) && !IsChar(type2))) {
+                                                      SemError("operand must be of type int or type char");
+                                                      progState = 1; }
+                                                    type = IsChar(type) && IsChar(type2) ? Types.charType : Types.intType; 
                                                     break;
                                                   default:
                                                     if (!IsArith(type) || !IsArith(type2)) {
@@ -633,7 +643,7 @@ PRODUCTIONS
   CharConst<out int value>
   =  charLit                                 (. string str = token.val;
                                                 str = Unescape(str.Substring(1, str.Length - 2));
-                                                value = str[0]; .)
+                                                value = (int) str[0]; .)
   .
 
   IntConst<out int value>

@@ -19,7 +19,7 @@ namespace Parva {
     }
 
     public static void Main (string[] args) {
-      bool mergeErrors = false, execution = true, immediate = false, codeOut = false;
+      bool mergeErrors = false, execution = true, immediate = false;
       string inputName = null;
 
       // ------------------------ process command line parameters:

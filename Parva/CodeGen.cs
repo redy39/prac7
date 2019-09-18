@@ -221,6 +221,14 @@ namespace Parva {
       Emit(PVM.sto);
     } // CodeGen.Assign
 
+    public static void JumpAndLink(Label destination) {
+        Emit(PVM.jal); Emit(destination.Address());
+    }
+
+    public static void JumpReturnAddress() {
+        Emit(PVM.jra);
+    }
+
     public static void LoadReturnAddress() {
     // Generates code to push address of function return slot on top of stack.
       Emit(PVM.lda); Emit(0);

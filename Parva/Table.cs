@@ -17,7 +17,8 @@ namespace Parva {
       nullType  =  2,             // array types are denoted by these
       intType   =  4,             // numbers + 1
       boolType  =  6,
-      voidType  = 8;
+      charType  =  8,
+      voidType  = 10;
 
     static List<string> typeNames = new List<string>();
 
@@ -201,6 +202,7 @@ namespace Parva {
       Types.AddType("null");
       Types.AddType("int");
       Types.AddType("bool");
+      Types.AddType("char");
       Types.AddType("void");
       sentinelEntry = new Entry();
       sentinelEntry.name = "";

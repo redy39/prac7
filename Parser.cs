@@ -991,6 +991,7 @@ public class Parser {
 			      SemError("operand must be of type int or type char");
 			      progState = 1; }
 			    type = IsChar(type) && IsChar(type2) ? Types.charType : Types.intType;
+			    CodeGen.BinaryOp(op);
 			    break;
 			  default:
 			    if (!IsArith(type) || !IsArith(type2)) {

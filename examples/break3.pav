@@ -2,7 +2,7 @@ void Main () { $C+
 // break3.pav
 // Illegal break statements
   int i = 0;
-  break;
+  // break;
   while (i < 10) {
     write(i);
     i = i + 1;

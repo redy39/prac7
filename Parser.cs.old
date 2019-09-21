@@ -503,7 +503,7 @@ public class Parser {
 				} else if (la.kind == plusplus_Sym || la.kind == minusminus_Sym) {
 					IncOp(out op);
 					if (!IsArith(des.type) && !IsChar(des.type))
-					  SemError("cannot apply " + op + " to this type");
+					  SemError("cannot incriment / decrement this type");
 					progState = 1;
 					CodeGen.LoadValue(des.entry);
 					CodeGen.LoadConstant(1);
@@ -753,7 +753,8 @@ public class Parser {
 			    comparable = Compatible(type, type2);
 			    break;
 			  default:
-			    comparable = IsArith(type) && IsArith(type2);
+			    comparable = (IsArith(type) || IsChar(type))
+			              && (IsArith(type2) || IsChar(type2));
 			    break;
 			}
 			if (!comparable) {
@@ -1025,16 +1026,19 @@ public class Parser {
 			    if((!IsArith(type) && !IsChar(type))
 			    || (!IsArith(type2) && !IsChar(type2))) {
 			      SemError("operand must be of type int or type char");
-			      progState = 1; }
+			      progState = 1;
+			    }
 			    type = IsChar(type) && IsChar(type2) ? Types.charType : Types.intType;
 			    CodeGen.BinaryOp(op);
 			    break;
 			  default:
-			    if (!IsArith(type) || !IsArith(type2)) {
+			    if((!IsArith(type) && !IsChar(type))
+			    || (!IsArith(type2) && !IsChar(type2))) {
 			      SemError("arithmetic operands needed");
 			      type = Types.noType;
 			      progState = 1;
 			    }
+			    type = Types.intType;
 			    CodeGen.BinaryOp(op);
 			    break;
 			}

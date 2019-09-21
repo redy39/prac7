@@ -1,0 +1,33 @@
+ASSEM
+BEGIN
+  {    0 } FHDR    
+  {    1 } CALL     4
+  {    3 } HALT    
+  {    4 } DSP      2
+  {    6 } LDL      0
+  {    8 } LDC      1
+  {   10 } ADD     
+  {   11 } STO     
+  {   12 } LDA      4
+  {   14 } LDL      4
+  {   16 } LDC      1
+  {   18 } ADD     
+  {   19 } STO     
+  {   20 } LDA      4
+  {   22 } LDC      0
+  {   24 } STO     
+  {   25 } LDA      4
+  {   27 } LDL      4
+  {   29 } LDC      1
+  {   31 } SUB     
+  {   32 } STO     
+  {   33 } LDA      5
+  {   35 } LDL      5
+  {   37 } LDC      1
+  {   39 } ADD     
+  {   40 } STO     
+  {   41 } LDA      5
+  {   43 } LDC      90
+  {   45 } STO     
+  {   46 } RETV    
+END.

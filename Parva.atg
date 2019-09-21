@@ -9,6 +9,7 @@ COMPILER Parva $NC
    int and bool types supported
    Bradshaw -- version for Practical 7, 2019
    Adapted by Redy van Dyk && Scott Burnett - Group Q */
+
   public static bool // tied to pragmas/directives
     debug    = false,
     listCode = false,
@@ -275,19 +276,36 @@ PRODUCTIONS
   .
 
 
-  AssignmentOrCall                           (. int expType;
+  AssignmentOrCall                           (. int expType, op;
                                                 DesType des; .)
   =  (  IF (IsCall(out des))                    // /* use resolver to handle LL(1) conflict */
          identifier                          (. CodeGen.FrameHeader(); .)
          "(" Arguments<des> ")"              (. CodeGen.Call(des.entry.entryPoint); .)
-      |  Designator<out des>                 (. if (des.entry.kind != Kinds.Var)
+     |  ( Designator<out des>                (. if (des.entry.kind != Kinds.Var)
                                                   SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]); 
                                                 progState = 1; .)
-         AssignOp
-         Expression<out expType>             (. if (!Assignable(des.type, expType))
+          ( AssignOp
+            Expression<out expType>          (. if (!Assignable(des.type, expType))
                                                   SemError("incompatible types in assignment");
                                                 progState = 1;
                                                 CodeGen.Assign(des.type); .)
+            | IncOp<out op>                  (. if (!IsArith(des.type) && !IsChar(des.type))
+                                                  SemError("cannot apply " + op + " to this type");
+                                                progState = 1;
+                                                CodeGen.LoadValue(des.entry);
+                                                CodeGen.LoadConstant(1); 
+                                                CodeGen.BinaryOp(op);
+                                                CodeGen.Assign(des.type); .)
+          )
+        | IncOp<out op>
+          Designator<out des>                (. if (!IsArith(des.type) && !IsChar(des.type))
+                                                  SemError("cannot apply " + op + " to this type");
+                                                progState = 1;
+                                                CodeGen.LoadValue(des.entry);
+                                                CodeGen.LoadConstant(1); 
+                                                CodeGen.BinaryOp(op);
+                                                CodeGen.Assign(des.type); .)
+        )
      ) WEAK ";"
   .
 
@@ -498,7 +516,8 @@ PRODUCTIONS
                                                     comparable = Compatible(type, type2);
                                                     break;
                                                   default:
-                                                    comparable = IsArith(type) && IsArith(type2);
+                                                    comparable = (IsArith(type) || IsChar(type)) 
+                                                              && (IsArith(type2) || IsChar(type2));
                                                     break;
                                                 }
                                                 if (!comparable) {
@@ -536,6 +555,7 @@ PRODUCTIONS
                                                       SemError("operand must be of type int or type char");
                                                       progState = 1; }
                                                     type = IsChar(type) && IsChar(type2) ? Types.charType : Types.intType; 
+                                                    CodeGen.BinaryOp(op);
                                                     break;
                                                   default:
                                                     if (!IsArith(type) || !IsArith(type2)) {
@@ -625,6 +645,11 @@ PRODUCTIONS
      | "<="                                  (. op = CodeGen.cle; .)
      | ">"                                   (. op = CodeGen.cgt; .)
      | ">="                                  (. op = CodeGen.cge; .)
+  .
+
+  IncOp<out int op>                          (. op = CodeGen.nop; .)
+  =    "++"                                  (. op = CodeGen.add; .)
+     | "--"                                  (. op = CodeGen.sub; .)
   .
 
   AssignOp = "=" .

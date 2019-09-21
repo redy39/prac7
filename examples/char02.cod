@@ -17,7 +17,7 @@ BEGIN
   {   22 } LDV     
   {   23 } LDC      46
   {   25 } CNE     
-  {   26 } BZE      52
+  {   26 } BZE      53
   {   28 } LDA      4
   {   30 } LDV     
   {   31 } LDA      5
@@ -30,28 +30,29 @@ BEGIN
   {   41 } LDA      5
   {   43 } LDV     
   {   44 } LDC      1
-  {   46 } STO     
-  {   47 } LDA      6
-  {   49 } INPC    
-  {   50 } BRN      20
-  {   52 } LDA      5
-  {   54 } LDV     
-  {   55 } LDC      0
-  {   57 } CGT     
-  {   58 } BZE      80
-  {   60 } LDA      5
-  {   62 } LDA      5
-  {   64 } LDV     
-  {   65 } LDC      1
-  {   67 } SUB     
-  {   68 } STO     
-  {   69 } LDA      4
-  {   71 } LDV     
-  {   72 } LDA      5
-  {   74 } LDV     
-  {   75 } LDXA    
-  {   76 } LDV     
-  {   77 } PRNC    
-  {   78 } BRN      52
-  {   80 } RETV    
+  {   46 } ADD     
+  {   47 } STO     
+  {   48 } LDA      6
+  {   50 } INPC    
+  {   51 } BRN      20
+  {   53 } LDA      5
+  {   55 } LDV     
+  {   56 } LDC      0
+  {   58 } CGT     
+  {   59 } BZE      81
+  {   61 } LDA      5
+  {   63 } LDA      5
+  {   65 } LDV     
+  {   66 } LDC      1
+  {   68 } SUB     
+  {   69 } STO     
+  {   70 } LDA      4
+  {   72 } LDV     
+  {   73 } LDA      5
+  {   75 } LDV     
+  {   76 } LDXA    
+  {   77 } LDV     
+  {   78 } PRNC    
+  {   79 } BRN      53
+  {   81 } RETV    
 END.

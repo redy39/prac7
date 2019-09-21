@@ -67,29 +67,31 @@ public class Parser {
 	public const int lessequal_Sym = 49;
 	public const int greater_Sym = 50;
 	public const int greaterequal_Sym = 51;
-	public const int equal_Sym = 52;
-	public const int NOT_SYM = 53;
+	public const int plusplus_Sym = 52;
+	public const int minusminus_Sym = 53;
+	public const int equal_Sym = 54;
+	public const int NOT_SYM = 55;
 	// pragmas
-	public const int DebugOn_Sym = 54;
-	public const int DebugOff_Sym = 55;
-	public const int StackDump_Sym = 56;
-	public const int HeapDump_Sym = 57;
-	public const int TableDump_Sym = 58;
-	public const int CodeGenOn_Sym = 59;
-	public const int CodeGenOff_Sym = 60;
-	public const int WarningsOn_Sym = 61;
-	public const int WarningsOff_Sym = 62;
+	public const int DebugOn_Sym = 56;
+	public const int DebugOff_Sym = 57;
+	public const int StackDump_Sym = 58;
+	public const int HeapDump_Sym = 59;
+	public const int TableDump_Sym = 60;
+	public const int CodeGenOn_Sym = 61;
+	public const int CodeGenOff_Sym = 62;
+	public const int WarningsOn_Sym = 63;
+	public const int WarningsOff_Sym = 64;
 
-	public const int maxT = 53;
-	public const int _DebugOn = 54;
-	public const int _DebugOff = 55;
-	public const int _StackDump = 56;
-	public const int _HeapDump = 57;
-	public const int _TableDump = 58;
-	public const int _CodeGenOn = 59;
-	public const int _CodeGenOff = 60;
-	public const int _WarningsOn = 61;
-	public const int _WarningsOff = 62;
+	public const int maxT = 55;
+	public const int _DebugOn = 56;
+	public const int _DebugOff = 57;
+	public const int _StackDump = 58;
+	public const int _HeapDump = 59;
+	public const int _TableDump = 60;
+	public const int _CodeGenOn = 61;
+	public const int _CodeGenOff = 62;
+	public const int _WarningsOn = 63;
+	public const int _WarningsOff = 64;
 
 	const bool T = true;
 	const bool x = false;
@@ -383,7 +385,7 @@ public class Parser {
 	}
 
 	static void Statement(StackFrame frame, Label label) {
-		while (!(StartOf(5))) {SynErr(54); Get();}
+		while (!(StartOf(5))) {SynErr(56); Get();}
 		switch (la.kind) {
 		case lbrace_Sym: {
 			Block(frame, label);
@@ -397,7 +399,7 @@ public class Parser {
 			VarDeclarations(frame);
 			break;
 		}
-		case identifier_Sym: {
+		case identifier_Sym: case plusplus_Sym: case minusminus_Sym: {
 			AssignmentOrCall();
 			break;
 		}
@@ -442,7 +444,7 @@ public class Parser {
 			Warning("possible unintended empty statement");
 			break;
 		}
-		default: SynErr(55); break;
+		default: SynErr(57); break;
 		}
 	}
 
@@ -476,7 +478,7 @@ public class Parser {
 	}
 
 	static void AssignmentOrCall() {
-		int expType;
+		int expType, op;
 		DesType des;
 		if (IsCall(out des)) {
 			Expect(identifier_Sym);
@@ -485,18 +487,41 @@ public class Parser {
 			Arguments(des);
 			Expect(rparen_Sym);
 			CodeGen.Call(des.entry.entryPoint);
-		} else if (la.kind == identifier_Sym) {
-			Designator(out des);
-			if (des.entry.kind != Kinds.Var)
-			  SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]);
-			progState = 1;
-			AssignOp();
-			Expression(out expType);
-			if (!Assignable(des.type, expType))
-			  SemError("incompatible types in assignment");
-			progState = 1;
-			CodeGen.Assign(des.type);
-		} else SynErr(56);
+		} else if (la.kind == identifier_Sym || la.kind == plusplus_Sym || la.kind == minusminus_Sym) {
+			if (la.kind == identifier_Sym) {
+				Designator(out des);
+				if (des.entry.kind != Kinds.Var)
+				  SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]);
+				progState = 1;
+				if (la.kind == equal_Sym) {
+					AssignOp();
+					Expression(out expType);
+					if (!Assignable(des.type, expType))
+					  SemError("incompatible types in assignment");
+					progState = 1;
+					CodeGen.Assign(des.type);
+				} else if (la.kind == plusplus_Sym || la.kind == minusminus_Sym) {
+					IncOp(out op);
+					if (!IsArith(des.type) && !IsChar(des.type))
+					  SemError("cannot apply " + op + " to this type");
+					progState = 1;
+					CodeGen.LoadValue(des.entry);
+					CodeGen.LoadConstant(1);
+					CodeGen.BinaryOp(op);
+					CodeGen.Assign(des.type);
+				} else SynErr(58);
+			} else {
+				IncOp(out op);
+				Designator(out des);
+				if (!IsArith(des.type) && !IsChar(des.type))
+				  SemError("cannot apply " + op + " to this type");
+				progState = 1;
+				CodeGen.LoadValue(des.entry);
+				CodeGen.LoadConstant(1);
+				CodeGen.BinaryOp(op);
+				CodeGen.Assign(des.type);
+			}
+		} else SynErr(59);
 		ExpectWeak(semicolon_Sym, 10);
 	}
 
@@ -558,7 +583,7 @@ public class Parser {
 			NormalFor(frame);
 		} else if (la.kind == identifier_Sym) {
 			FancyFor(frame);
-		} else SynErr(57);
+		} else SynErr(60);
 	}
 
 	static void HaltStatement() {
@@ -600,7 +625,7 @@ public class Parser {
 			}
 			Expect(rparen_Sym);
 			CodeGen.ReadLine();
-		} else SynErr(58);
+		} else SynErr(61);
 		ExpectWeak(semicolon_Sym, 6);
 	}
 
@@ -618,7 +643,7 @@ public class Parser {
 			}
 			Expect(rparen_Sym);
 			CodeGen.WriteLine();
-		} else SynErr(59);
+		} else SynErr(62);
 		ExpectWeak(semicolon_Sym, 6);
 	}
 
@@ -655,7 +680,7 @@ public class Parser {
 		} else if (la.kind == null_Sym) {
 			Get();
 			con.type = Types.nullType; con.value = 0;
-		} else SynErr(60);
+		} else SynErr(63);
 	}
 
 	static void IntConst(out int value) {
@@ -692,7 +717,7 @@ public class Parser {
 		} else if (la.kind == char_Sym) {
 			Get();
 			type = Types.charType;
-		} else SynErr(61);
+		} else SynErr(64);
 	}
 
 	static void OneVar(StackFrame frame, int type) {
@@ -728,7 +753,8 @@ public class Parser {
 			    comparable = Compatible(type, type2);
 			    break;
 			  default:
-			    comparable = IsArith(type) && IsArith(type2);
+			    comparable = (IsArith(type) || IsChar(type))
+			              && (IsArith(type2) || IsChar(type2));
 			    break;
 			}
 			if (!comparable) {
@@ -783,6 +809,17 @@ public class Parser {
 		}
 	}
 
+	static void IncOp(out int op) {
+		op = CodeGen.nop;
+		if (la.kind == plusplus_Sym) {
+			Get();
+			op = CodeGen.add;
+		} else if (la.kind == minusminus_Sym) {
+			Get();
+			op = CodeGen.sub;
+		} else SynErr(65);
+	}
+
 	static void OneArg(Entry fp) {
 		int argType;
 		Expression(out argType);
@@ -828,7 +865,7 @@ public class Parser {
 		Label loopStart = new Label(!known);
 		Expect(lparen_Sym);
 		string name = "";
-		if (la.kind == identifier_Sym) {
+		if (la.kind == identifier_Sym || la.kind == plusplus_Sym || la.kind == minusminus_Sym) {
 			AssignmentOrCall();
 		} else if (la.kind == identifier_Sym) {
 			Ident(out name);
@@ -837,7 +874,7 @@ public class Parser {
 			  SemError("Undeclared Identifier: " + name);
 		} else if (la.kind == int_Sym || la.kind == bool_Sym || la.kind == char_Sym) {
 			VarDeclarations(frame);
-		} else SynErr(62);
+		} else SynErr(66);
 		loopStart.Here();
 		Condition();
 		CodeGen.BranchFalse(loopExit);
@@ -915,7 +952,7 @@ public class Parser {
 			  default:
 			    SemError("cannot read this type"); progState = 1; break;
 			}
-		} else SynErr(63);
+		} else SynErr(67);
 	}
 
 	static void StringConst(out string str) {
@@ -949,7 +986,7 @@ public class Parser {
 			  default:
 			    break;
 			}
-		} else SynErr(64);
+		} else SynErr(68);
 	}
 
 	static void AddExp(out int type) {
@@ -972,7 +1009,7 @@ public class Parser {
 			CodeGen.NegateInteger();
 		} else if (StartOf(16)) {
 			Term(out type);
-		} else SynErr(65);
+		} else SynErr(69);
 		while (la.kind == plus_Sym || la.kind == minus_Sym || la.kind == barbar_Sym) {
 			AddOp(out op);
 			if (op == CodeGen.or)
@@ -991,6 +1028,7 @@ public class Parser {
 			      SemError("operand must be of type int or type char");
 			      progState = 1; }
 			    type = IsChar(type) && IsChar(type2) ? Types.charType : Types.intType;
+			    CodeGen.BinaryOp(op);
 			    break;
 			  default:
 			    if (!IsArith(type) || !IsArith(type2)) {
@@ -1038,7 +1076,7 @@ public class Parser {
 			op = CodeGen.cge;
 			break;
 		}
-		default: SynErr(66); break;
+		default: SynErr(70); break;
 		}
 	}
 
@@ -1082,7 +1120,7 @@ public class Parser {
 		} else if (la.kind == barbar_Sym) {
 			Get();
 			op = CodeGen.or;
-		} else SynErr(67);
+		} else SynErr(71);
 	}
 
 	static void Factor(out int type) {
@@ -1130,7 +1168,7 @@ public class Parser {
 			Get();
 			Expression(out type);
 			Expect(rparen_Sym);
-		} else SynErr(68);
+		} else SynErr(72);
 	}
 
 	static void MulOp(out int op) {
@@ -1147,7 +1185,7 @@ public class Parser {
 		} else if (la.kind == andand_Sym) {
 			Get();
 			op = CodeGen.and;
-		} else SynErr(69);
+		} else SynErr(73);
 	}
 
 
@@ -1162,25 +1200,25 @@ public class Parser {
 	}
 
 	static bool[,] set = {
-		{T,T,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,T,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{T,T,x,x, x,T,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{T,T,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{T,T,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,T,T,T, x,x,T,x, T,T,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{T,T,T,x, T,x,T,x, x,T,T,T, T,T,T,T, x,T,T,T, x,x,T,x, T,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{T,T,T,x, T,x,T,T, x,T,T,T, T,T,T,T, x,T,T,T, x,x,T,x, T,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,T,T,T, T,x,T,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, x,x,x},
-		{x,T,T,x, T,x,T,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{T,T,T,x, T,x,T,x, x,T,x,T, T,T,T,T, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,T,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,T,T,x, T,x,T,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,x,x, x,x,x,x, x,x,x},
-		{x,x,T,x, T,x,x,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x}
+		{T,T,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,T,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{T,T,x,x, x,T,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{T,T,x,x, x,x,x,x, x,T,x,T, T,x,x,x, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{T,T,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,T,T,T, x,x,T,x, T,T,T,T, T,x,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{T,T,T,x, T,x,T,x, x,T,T,T, T,T,T,T, x,T,T,T, x,x,T,x, T,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{T,T,T,x, T,x,T,T, x,T,T,T, T,T,T,T, x,T,T,T, x,x,T,x, T,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{x,T,T,T, T,x,T,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, x,x,x,x, x},
+		{x,T,T,x, T,x,T,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{T,T,T,x, T,x,T,x, x,T,x,T, T,T,T,T, x,T,T,T, x,x,T,x, x,x,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x},
+		{x,T,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,T,T,x, T,x,T,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,x,x, x,x,x,x, x,x,x,x, x},
+		{x,x,T,x, T,x,x,x, x,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x}
 
 	};
 
@@ -1344,24 +1382,28 @@ public class Errors {
 			case 49: s = "\"<=\" expected"; break;
 			case 50: s = "\">\" expected"; break;
 			case 51: s = "\">=\" expected"; break;
-			case 52: s = "\"=\" expected"; break;
-			case 53: s = "??? expected"; break;
-			case 54: s = "this symbol not expected in Statement"; break;
-			case 55: s = "invalid Statement"; break;
-			case 56: s = "invalid AssignmentOrCall"; break;
-			case 57: s = "invalid ForStatement"; break;
-			case 58: s = "invalid ReadStatement"; break;
-			case 59: s = "invalid WriteStatement"; break;
-			case 60: s = "invalid Constant"; break;
-			case 61: s = "invalid BasicType"; break;
-			case 62: s = "invalid NormalFor"; break;
-			case 63: s = "invalid ReadElement"; break;
-			case 64: s = "invalid WriteElement"; break;
-			case 65: s = "invalid AddExp"; break;
-			case 66: s = "invalid RelOp"; break;
-			case 67: s = "invalid AddOp"; break;
-			case 68: s = "invalid Factor"; break;
-			case 69: s = "invalid MulOp"; break;
+			case 52: s = "\"++\" expected"; break;
+			case 53: s = "\"--\" expected"; break;
+			case 54: s = "\"=\" expected"; break;
+			case 55: s = "??? expected"; break;
+			case 56: s = "this symbol not expected in Statement"; break;
+			case 57: s = "invalid Statement"; break;
+			case 58: s = "invalid AssignmentOrCall"; break;
+			case 59: s = "invalid AssignmentOrCall"; break;
+			case 60: s = "invalid ForStatement"; break;
+			case 61: s = "invalid ReadStatement"; break;
+			case 62: s = "invalid WriteStatement"; break;
+			case 63: s = "invalid Constant"; break;
+			case 64: s = "invalid BasicType"; break;
+			case 65: s = "invalid IncOp"; break;
+			case 66: s = "invalid NormalFor"; break;
+			case 67: s = "invalid ReadElement"; break;
+			case 68: s = "invalid WriteElement"; break;
+			case 69: s = "invalid AddExp"; break;
+			case 70: s = "invalid RelOp"; break;
+			case 71: s = "invalid AddOp"; break;
+			case 72: s = "invalid Factor"; break;
+			case 73: s = "invalid MulOp"; break;
 
 			default: s = "error " + n; break;
 		}

@@ -909,8 +909,8 @@ public class Parser {
 			  progState = 1; }
 			switch (des.type) {
 			  case Types.intType:
-			  case Types.boolType:
 			  case Types.charType:
+			  case Types.boolType:
 			    CodeGen.Read(des.type); break;
 			  default:
 			    SemError("cannot read this type"); progState = 1; break;

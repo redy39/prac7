@@ -118,7 +118,7 @@ namespace Parva {
       sub     =  89,
       trap    =  90,
       jal     =  91,
-      jra     =  92,
+      jtos     =  92,
 
       nul     = 255;                         // leave gap for future
 
@@ -701,7 +701,7 @@ namespace Parva {
             Push(cpu.pc);
             cpu.pc = radr;
             break;
-          case PVM.jra:
+          case PVM.jtos:
             cpu.pc = Pop();
             break;
           default:                // unrecognized opcode
@@ -934,7 +934,7 @@ namespace Parva {
       mnemonics[PVM.sub]      = "SUB";
       mnemonics[PVM.trap]     = "TRAP";
       mnemonics[PVM.jal]     = "JAL";
-      mnemonics[PVM.jra]     = "JRA";
+      mnemonics[PVM.jtos]     = "JTOS";
     } // PVM.Init
 
   } // end PVM

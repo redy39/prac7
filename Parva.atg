@@ -73,7 +73,9 @@ COMPILER Parva $NC
   }
   
   static bool IsWritable(int type) {
-    return (type == Types.intType || type == Types.charType);
+    return (type == Types.intType 
+        || type == Types.charType
+        || type == Types.boolType);
   }
 
   static bool Compatible(int typeOne, int typeTwo) {
@@ -431,7 +433,7 @@ PRODUCTIONS
                                              (. CodeGen.writeWord(stmStart.Address()); .)
     }                                        (. CodeGen.Branch(loopExit); .)
     ")"                                      (. stmStart.Here(); .)
-    Statement<frame, loopExit>               (. CodeGen.JumpReturnAddress(); .)
+    Statement<frame, loopExit>               (. CodeGen.JumpTOS(); .)
                                              (. loopExit.Here(); .)
   .
 

@@ -225,8 +225,8 @@ namespace Parva {
         Emit(PVM.jal); Emit(destination.Address());
     }
 
-    public static void JumpReturnAddress() {
-        Emit(PVM.jra);
+    public static void JumpTOS() {
+        Emit(PVM.jtos);
     }
 
     public static void Dupicate() {

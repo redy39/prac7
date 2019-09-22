@@ -165,7 +165,9 @@ public class Parser {
   }
 
   static bool IsWritable(int type) {
-    return (type == Types.intType || type == Types.charType);
+    return (type == Types.intType
+        || type == Types.charType
+        || type == Types.boolType);
   }
 
   static bool Compatible(int typeOne, int typeTwo) {
@@ -918,7 +920,7 @@ public class Parser {
 		Expect(rparen_Sym);
 		stmStart.Here();
 		Statement(frame, loopExit);
-		CodeGen.JumpReturnAddress();
+		CodeGen.JumpTOS();
 		loopExit.Here();
 	}
 

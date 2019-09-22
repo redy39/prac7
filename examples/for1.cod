@@ -46,7 +46,7 @@ BEGIN
   {   73 } LDA      4
   {   75 } LDV     
   {   76 } PRNI    
-  {   77 } JRA     
+  {   77 } JTOS    
   {   78 } LDA      5
   {   80 } LDC      1
   {   82 } STO     
@@ -65,6 +65,6 @@ BEGIN
   {  104 } LDA      5
   {  106 } LDV     
   {  107 } PRNB    
-  {  108 } JRA     
+  {  108 } JTOS    
   {  109 } RETV    
 END.

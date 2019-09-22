@@ -8,7 +8,15 @@ COMPILER Parva $NC
    No globals or value returning functions
    int and bool types supported
    Bradshaw -- version for Practical 7, 2019
-   Adapted by Redy van Dyk && Scott Burnett - Group Q */
+###################################################################
+   Adapted by Redy van Dyk && Scott Burnett - Group Q
+   if then else and elseif statements supported
+   while and do while loops supported
+   for and for in loops supported
+   char type supported
+   ++ and -- operators supported
+   length keyword supported
+   */
 
   public static bool // tied to pragmas/directives
     debug    = false,
@@ -277,7 +285,6 @@ PRODUCTIONS
      ]                                       (. Table.Insert(var); .)
   .
 
-
   AssignmentOrCall                           (. int expType, op;
                                                 DesType des; .)
   =  (  IF (IsCall(out des))                    // /* use resolver to handle LL(1) conflict */
@@ -298,6 +305,12 @@ PRODUCTIONS
                                                 CodeGen.Dereference();
                                                 CodeGen.LoadConstant(1); 
                                                 CodeGen.BinaryOp(op);
+                                                if (IsChar(des.type)) {
+                                                  // wrap around for charType
+                                                  CodeGen.LoadConstant(PVM.maxChar);
+                                                  CodeGen.BinaryOp(CodeGen.add);
+                                                  CodeGen.LoadConstant(PVM.maxChar);
+                                                  CodeGen.BinaryOp(CodeGen.rem); }
                                                 CodeGen.Assign(des.type); .)
           )
         | IncOp<out op>
@@ -308,6 +321,12 @@ PRODUCTIONS
                                                 CodeGen.Dereference();
                                                 CodeGen.LoadConstant(1); 
                                                 CodeGen.BinaryOp(op);
+                                                if (IsChar(des.type)) {
+                                                  // wrap around for charType
+                                                  CodeGen.LoadConstant(PVM.maxChar);
+                                                  CodeGen.BinaryOp(CodeGen.add);
+                                                  CodeGen.LoadConstant(PVM.maxChar);
+                                                  CodeGen.BinaryOp(CodeGen.rem); }
                                                 CodeGen.Assign(des.type); .)
         )
      ) WEAK ";"
@@ -628,7 +647,7 @@ PRODUCTIONS
          "]"
      | "length"
          "(" Designator<out des> ")"         (. if (!IsArray(des.type))
-                                                  SemError("operand must be array type"); 
+                                                  SemError("operand must be of array type"); 
                                                 type = Types.intType; 
                                                 CodeGen.Dereference();
                                                 CodeGen.Dereference(); .)

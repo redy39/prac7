@@ -28,17 +28,20 @@ BEGIN
   {   38 } LDV     
   {   39 } LDC      4
   {   41 } LDXA    
-  {   42 } LDL      6
+  {   42 } DUP     
+  {   43 } LDV     
   {   44 } LDC      1
   {   46 } ADD     
   {   47 } STO     
   {   48 } LDA      4
-  {   50 } LDL      4
+  {   50 } DUP     
+  {   51 } LDV     
   {   52 } LDC      1
   {   54 } ADD     
   {   55 } STO     
   {   56 } LDA      5
-  {   58 } LDL      5
+  {   58 } DUP     
+  {   59 } LDV     
   {   60 } LDC      1
   {   62 } SUB     
   {   63 } STO     

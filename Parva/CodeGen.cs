@@ -229,6 +229,10 @@ namespace Parva {
         Emit(PVM.jra);
     }
 
+    public static void Dupicate() {
+        Emit(PVM.dup);
+    }
+
     public static void LoadReturnAddress() {
     // Generates code to push address of function return slot on top of stack.
       Emit(PVM.lda); Emit(0);

@@ -1178,6 +1178,7 @@ public class Parser {
 			  SemError("operand must be array type");
 			type = Types.intType;
 			CodeGen.Dereference();
+			CodeGen.Dereference();
 			break;
 		}
 		case bang_Sym: {

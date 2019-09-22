@@ -506,7 +506,8 @@ public class Parser {
 					if (!IsArith(des.type) && !IsChar(des.type))
 					  SemError("cannot incriment / decrement this type");
 					progState = 1;
-					CodeGen.LoadValue(des.entry);
+					CodeGen.Dupicate();
+					CodeGen.Dereference();
 					CodeGen.LoadConstant(1);
 					CodeGen.BinaryOp(op);
 					CodeGen.Assign(des.type);
@@ -517,7 +518,8 @@ public class Parser {
 				if (!IsArith(des.type) && !IsChar(des.type))
 				  SemError("cannot incriment / decrement this type");
 				progState = 1;
-				CodeGen.LoadValue(des.entry);
+				CodeGen.Dupicate();
+				CodeGen.Dereference();
 				CodeGen.LoadConstant(1);
 				CodeGen.BinaryOp(op);
 				CodeGen.Assign(des.type);

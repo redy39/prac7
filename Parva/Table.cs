@@ -64,6 +64,7 @@ namespace Parva {
     public int     value       = 0;       // constants
     public int     offset      = 0;       // variables
     public bool    declared    = true;    // true for all except sentinel entry
+    public bool    locked      = false;   // temporarily prevent modification of entry
     public Entry   nextInScope = null;    // link to next entry in current scope
     public int     nParams     = 0;       // functions
     public Label   entryPoint  = new Label(false);

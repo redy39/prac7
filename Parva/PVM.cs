@@ -161,8 +161,8 @@ namespace Parva {
   // Utilities
 
     static string padding = "                                                               ";
-    const int maxInt = System.Int32.MaxValue;
-    const int maxChar = 255;
+    public const int maxInt = System.Int32.MaxValue;
+    public const int maxChar = 255;
 
     static void StackDump(OutFile results, int pcNow) {
     // Dump local variable and stack area - useful for debugging

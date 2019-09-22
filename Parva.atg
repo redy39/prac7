@@ -10,11 +10,16 @@ COMPILER Parva $NC
    Bradshaw -- version for Practical 7, 2019
 ###################################################################
    Adapted by Redy van Dyk && Scott Burnett - Group Q
-   if then else and elseif statements supported
-   while and do while loops supported
-   for and for in loops supported
+   optional string output for halt statement
+   warning for empty statement
+   concatenation of string literals supported
+   if-then-else and elseif statements supported
+   do-while loop supported
+   break statement supported
+   for and for-in loops supported
    char type supported
    ++ and -- operators supported
+   prevents modification of loop control variable in for-in statement
    length keyword supported
    */
 
@@ -292,6 +297,8 @@ PRODUCTIONS
          "(" Arguments<des> ")"              (. CodeGen.Call(des.entry.entryPoint); .)
      |  ( Designator<out des>                (. if (des.entry.kind != Kinds.Var)
                                                   SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]); 
+                                                if (des.entry.locked)
+                                                  SemError("cannot modify loop control variable");
                                                 progState = 1; .)
           ( AssignOp
             Expression<out expType>          (. if (!Assignable(des.type, expType))
@@ -314,7 +321,11 @@ PRODUCTIONS
                                                 CodeGen.Assign(des.type); .)
           )
         | IncOp<out op>
-          Designator<out des>                (. if (!IsArith(des.type) && !IsChar(des.type))
+          Designator<out des>                (. if (des.entry.kind != Kinds.Var)
+                                                  SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]); 
+                                                if (des.entry.locked)
+                                                  SemError("cannot modify loop control variable");
+                                                if (!IsArith(des.type) && !IsChar(des.type))
                                                   SemError("cannot incriment / decrement this type");
                                                 progState = 1;
                                                 CodeGen.Dupicate();
@@ -428,32 +439,34 @@ PRODUCTIONS
     WEAK ";"
     AssignmentOrCall
     ")"
-    Statement<frame, loopExit>               (. CodeGen.Branch(loopStart); .)
-                                             (. loopExit.Here(); .)
+    Statement<frame, loopExit>               (. CodeGen.Branch(loopStart);
+                                                loopExit.Here(); .)
     .
 
     FancyFor<StackFrame frame>               (. Label loopExit  = new Label(!known);
                                                 Label stmStart  = new Label(!known); .)
     =                                        (. string name = ""; Entry e; .)
-    Ident<out name>                          (. e = Table.Find(name); .)
-                                             (. if(e == null) .)
-                                             (.   SemError("Undeclared Identifier: " + name); .)
+    Ident<out name>                          (. e = Table.Find(name);
+                                                if(e == null)
+                                                  SemError("Undeclared Identifier: " + name); .)
     "in"                                     (. int exprType = Types.noType; .)
     "("
                                              (. CodeGen.LoadAddress(e); .)
-    Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!"); .)
-                                             (. CodeGen.Assign(exprType); .)
-                                             (. CodeGen.JumpAndLink(stmStart); .)
+    Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!");
+                                                CodeGen.Assign(exprType);
+                                                CodeGen.JumpAndLink(stmStart); .)
     { ","
                                              (. CodeGen.LoadAddress(e); .)
-    Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!"); .)
-                                             (. CodeGen.Assign(exprType); .)
-                                             (. CodeGen.writeWord(PVM.jal); .)
-                                             (. CodeGen.writeWord(stmStart.Address()); .)
+    Expression<out exprType>                 (. if (exprType != e.type) SemError("Type mismatch!");
+                                                CodeGen.Assign(exprType);
+                                                CodeGen.JumpAndLink(stmStart); .)
     }                                        (. CodeGen.Branch(loopExit); .)
-    ")"                                      (. stmStart.Here(); .)
-    Statement<frame, loopExit>               (. CodeGen.JumpTOS(); .)
-                                             (. loopExit.Here(); .)
+    ")"
+                                             (. stmStart.Here();
+                                                e.locked = true; .)
+    Statement<frame, loopExit>               (. CodeGen.JumpTOS();
+                                                e.locked = false;
+                                                loopExit.Here(); .)
   .
 
   HaltStatement

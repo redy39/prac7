@@ -495,6 +495,8 @@ public class Parser {
 				Designator(out des);
 				if (des.entry.kind != Kinds.Var)
 				  SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]);
+				if (des.entry.locked)
+				  SemError("cannot modify loop control variable");
 				progState = 1;
 				if (la.kind == equal_Sym) {
 					AssignOp();
@@ -512,11 +514,21 @@ public class Parser {
 					CodeGen.Dereference();
 					CodeGen.LoadConstant(1);
 					CodeGen.BinaryOp(op);
+					if (IsChar(des.type)) {
+					  // wrap around for charType
+					  CodeGen.LoadConstant(PVM.maxChar);
+					  CodeGen.BinaryOp(CodeGen.add);
+					  CodeGen.LoadConstant(PVM.maxChar);
+					  CodeGen.BinaryOp(CodeGen.rem); }
 					CodeGen.Assign(des.type);
 				} else SynErr(59);
 			} else {
 				IncOp(out op);
 				Designator(out des);
+				if (des.entry.kind != Kinds.Var)
+				  SemError("cannot assign to " + Kinds.kindNames[des.entry.kind]);
+				if (des.entry.locked)
+				  SemError("cannot modify loop control variable");
 				if (!IsArith(des.type) && !IsChar(des.type))
 				  SemError("cannot incriment / decrement this type");
 				progState = 1;
@@ -524,6 +536,12 @@ public class Parser {
 				CodeGen.Dereference();
 				CodeGen.LoadConstant(1);
 				CodeGen.BinaryOp(op);
+				if (IsChar(des.type)) {
+				  // wrap around for charType
+				  CodeGen.LoadConstant(PVM.maxChar);
+				  CodeGen.BinaryOp(CodeGen.add);
+				  CodeGen.LoadConstant(PVM.maxChar);
+				  CodeGen.BinaryOp(CodeGen.rem); }
 				CodeGen.Assign(des.type);
 			}
 		} else SynErr(60);
@@ -898,7 +916,7 @@ public class Parser {
 		Ident(out name);
 		e = Table.Find(name);
 		if(e == null)
-		SemError("Undeclared Identifier: " + name);
+		  SemError("Undeclared Identifier: " + name);
 		Expect(in_Sym);
 		int exprType = Types.noType;
 		Expect(lparen_Sym);
@@ -913,14 +931,15 @@ public class Parser {
 			Expression(out exprType);
 			if (exprType != e.type) SemError("Type mismatch!");
 			CodeGen.Assign(exprType);
-			CodeGen.writeWord(PVM.jal);
-			CodeGen.writeWord(stmStart.Address());
+			CodeGen.JumpAndLink(stmStart);
 		}
 		CodeGen.Branch(loopExit);
 		Expect(rparen_Sym);
 		stmStart.Here();
+		e.locked = true;
 		Statement(frame, loopExit);
 		CodeGen.JumpTOS();
+		e.locked = false;
 		loopExit.Here();
 	}
 
@@ -1179,7 +1198,7 @@ public class Parser {
 			Designator(out des);
 			Expect(rparen_Sym);
 			if (!IsArray(des.type))
-			  SemError("operand must be array type");
+			  SemError("operand must be of array type");
 			type = Types.intType;
 			CodeGen.Dereference();
 			CodeGen.Dereference();

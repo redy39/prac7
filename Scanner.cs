@@ -63,8 +63,8 @@ public class Scanner {
 	const char EOL = '\n';
 	const int  eofSym = 0;
 	const int charSetSize = 256;
-	const int maxT = 55;
-	const int noSym = 55;
+	const int maxT = 56;
+	const int noSym = 56;
 	// terminals
 	const int EOF_SYM = 0;
 	const int identifier_Sym = 1;
@@ -106,32 +106,33 @@ public class Scanner {
 	const int plus_Sym = 37;
 	const int minus_Sym = 38;
 	const int new_Sym = 39;
-	const int bang_Sym = 40;
-	const int barbar_Sym = 41;
-	const int star_Sym = 42;
-	const int slash_Sym = 43;
-	const int percent_Sym = 44;
-	const int andand_Sym = 45;
-	const int equalequal_Sym = 46;
-	const int bangequal_Sym = 47;
-	const int less_Sym = 48;
-	const int lessequal_Sym = 49;
-	const int greater_Sym = 50;
-	const int greaterequal_Sym = 51;
-	const int plusplus_Sym = 52;
-	const int minusminus_Sym = 53;
-	const int equal_Sym = 54;
-	const int NOT_SYM = 55;
+	const int length_Sym = 40;
+	const int bang_Sym = 41;
+	const int barbar_Sym = 42;
+	const int star_Sym = 43;
+	const int slash_Sym = 44;
+	const int percent_Sym = 45;
+	const int andand_Sym = 46;
+	const int equalequal_Sym = 47;
+	const int bangequal_Sym = 48;
+	const int less_Sym = 49;
+	const int lessequal_Sym = 50;
+	const int greater_Sym = 51;
+	const int greaterequal_Sym = 52;
+	const int plusplus_Sym = 53;
+	const int minusminus_Sym = 54;
+	const int equal_Sym = 55;
+	const int NOT_SYM = 56;
 	// pragmas
-	const int DebugOn_Sym = 56;
-	const int DebugOff_Sym = 57;
-	const int StackDump_Sym = 58;
-	const int HeapDump_Sym = 59;
-	const int TableDump_Sym = 60;
-	const int CodeGenOn_Sym = 61;
-	const int CodeGenOff_Sym = 62;
-	const int WarningsOn_Sym = 63;
-	const int WarningsOff_Sym = 64;
+	const int DebugOn_Sym = 57;
+	const int DebugOff_Sym = 58;
+	const int StackDump_Sym = 59;
+	const int HeapDump_Sym = 60;
+	const int TableDump_Sym = 61;
+	const int CodeGenOn_Sym = 62;
+	const int CodeGenOff_Sym = 63;
+	const int WarningsOn_Sym = 64;
+	const int WarningsOff_Sym = 65;
 
 	static short[] start = {
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -281,6 +282,7 @@ public class Scanner {
 			case "write": t.kind = write_Sym; break;
 			case "writeLine": t.kind = writeLine_Sym; break;
 			case "new": t.kind = new_Sym; break;
+			case "length": t.kind = length_Sym; break;
 			default: break;
 		}
 	}

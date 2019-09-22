@@ -622,6 +622,12 @@ PRODUCTIONS
                                                   progState = 1; }
                                                 CodeGen.Allocate(); .)
          "]"
+     | "length"
+         "(" Designator<out des> ")"         (. if (!IsArray(des.type))
+                                                  SemError("operand must be array type"); 
+                                                type = Types.intType; 
+                                                CodeGen.Dereference();
+                                                CodeGen.Dereference(); .)
      | "!" Factor<out type>                  (. if (!IsBool(type)) { SemError("boolean operand needed"); progState = 1; } 
                                                 else CodeGen.NegateBoolean();
                                                 type = Types.boolType; .)

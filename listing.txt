@@ -630,68 +630,74 @@
  622                                                   progState = 1; }
  623                                                 CodeGen.Allocate(); .)
  624          "]"
- 625      | "!" Factor<out type>                  (. if (!IsBool(type)) { SemError("boolean operand needed"); progState = 1; } 
- 626                                                 else CodeGen.NegateBoolean();
- 627                                                 type = Types.boolType; .)
- 628      | "(" Expression<out type> ")"
- 629   .
- 630 
- 631   AddOp<out int op>                          (. op = CodeGen.nop; .)
- 632   =    "+"                                   (. op = CodeGen.add; .)
- 633      | "-"                                   (. op = CodeGen.sub; .)
- 634      | "||"                                  (. op = CodeGen.or;  .)
+ 625      | "length"
+ 626          "(" Designator<out des> ")"         (. if (!IsArray(des.type))
+ 627                                                   SemError("operand must be array type"); 
+ 628                                                 type = Types.intType; 
+ 629                                                 CodeGen.Dereference();
+ 630                                                 CodeGen.Dereference(); .)
+ 631      | "!" Factor<out type>                  (. if (!IsBool(type)) { SemError("boolean operand needed"); progState = 1; } 
+ 632                                                 else CodeGen.NegateBoolean();
+ 633                                                 type = Types.boolType; .)
+ 634      | "(" Expression<out type> ")"
  635   .
  636 
- 637   MulOp<out int op>                          (. op = CodeGen.nop; .)
- 638   =    "*"                                   (. op = CodeGen.mul; .)
- 639      | "/"                                   (. op = CodeGen.div; .)
- 640      | "%"                                   (. op = CodeGen.rem; .)
- 641      | "&&"                                  (. op = CodeGen.and; .)
- 642   .
- 643 
- 644   RelOp<out int op>                          (. op = CodeGen.nop; .)
- 645   =    "=="                                  (. op = CodeGen.ceq; .)
- 646      | "!="                                  (. op = CodeGen.cne; .)
- 647      | "<"                                   (. op = CodeGen.clt; .)
- 648      | "<="                                  (. op = CodeGen.cle; .)
- 649      | ">"                                   (. op = CodeGen.cgt; .)
- 650      | ">="                                  (. op = CodeGen.cge; .)
- 651   .
- 652 
- 653   IncOp<out int op>                          (. op = CodeGen.nop; .)
- 654   =    "++"                                  (. op = CodeGen.add; .)
- 655      | "--"                                  (. op = CodeGen.sub; .)
- 656   .
- 657 
- 658   AssignOp = "=" .
- 659 
- 660   Ident<out string name>
- 661   =  identifier                              (. name = token.val; .)
+ 637   AddOp<out int op>                          (. op = CodeGen.nop; .)
+ 638   =    "+"                                   (. op = CodeGen.add; .)
+ 639      | "-"                                   (. op = CodeGen.sub; .)
+ 640      | "||"                                  (. op = CodeGen.or;  .)
+ 641   .
+ 642 
+ 643   MulOp<out int op>                          (. op = CodeGen.nop; .)
+ 644   =    "*"                                   (. op = CodeGen.mul; .)
+ 645      | "/"                                   (. op = CodeGen.div; .)
+ 646      | "%"                                   (. op = CodeGen.rem; .)
+ 647      | "&&"                                  (. op = CodeGen.and; .)
+ 648   .
+ 649 
+ 650   RelOp<out int op>                          (. op = CodeGen.nop; .)
+ 651   =    "=="                                  (. op = CodeGen.ceq; .)
+ 652      | "!="                                  (. op = CodeGen.cne; .)
+ 653      | "<"                                   (. op = CodeGen.clt; .)
+ 654      | "<="                                  (. op = CodeGen.cle; .)
+ 655      | ">"                                   (. op = CodeGen.cgt; .)
+ 656      | ">="                                  (. op = CodeGen.cge; .)
+ 657   .
+ 658 
+ 659   IncOp<out int op>                          (. op = CodeGen.nop; .)
+ 660   =    "++"                                  (. op = CodeGen.add; .)
+ 661      | "--"                                  (. op = CodeGen.sub; .)
  662   .
  663 
- 664   StringConst<out string str>
- 665   =  stringLit                               (. str = token.val; .)
- 666      { ["+"] stringLit                       (. str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1); .)
- 667      }
- 668                                              (. str = Unescape(str.Substring(1, str.Length - 2)); .)
- 669   .
- 670 
- 671   CharConst<out int value>
- 672   =  charLit                                 (. string str = token.val;
- 673                                                 str = Unescape(str.Substring(1, str.Length - 2));
- 674                                                 value = (int) str[0]; .)
+ 664   AssignOp = "=" .
+ 665 
+ 666   Ident<out string name>
+ 667   =  identifier                              (. name = token.val; .)
+ 668   .
+ 669 
+ 670   StringConst<out string str>
+ 671   =  stringLit                               (. str = token.val; .)
+ 672      { ["+"] stringLit                       (. str = str.Substring(0, str.Length - 1) + token.val.Substring(1, token.val.Length - 1); .)
+ 673      }
+ 674                                              (. str = Unescape(str.Substring(1, str.Length - 2)); .)
  675   .
  676 
- 677   IntConst<out int value>
- 678   =  number                                  (. try {
- 679                                                   value = Convert.ToInt32(token.val);
- 680                                                 } catch (Exception) {
- 681                                                   value = 0; SemError("number out of range"); progState = 1;
- 682                                                 } .)
- 683   .
- 684 
- 685 END Parva.
- 686 
+ 677   CharConst<out int value>
+ 678   =  charLit                                 (. string str = token.val;
+ 679                                                 str = Unescape(str.Substring(1, str.Length - 2));
+ 680                                                 value = (int) str[0]; .)
+ 681   .
+ 682 
+ 683   IntConst<out int value>
+ 684   =  number                                  (. try {
+ 685                                                   value = Convert.ToInt32(token.val);
+ 686                                                 } catch (Exception) {
+ 687                                                   value = 0; SemError("number out of range"); progState = 1;
+ 688                                                 } .)
+ 689   .
+ 690 
+ 691 END Parva.
+ 692 
 
 0 errors detected
 7 warnings detected

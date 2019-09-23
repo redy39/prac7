@@ -916,7 +916,7 @@ public class Parser {
 		Ident(out name);
 		e = Table.Find(name);
 		if(e == null)
-		SemError("Undeclared Identifier: " + name);
+		  SemError("Undeclared Identifier: " + name);
 		Expect(in_Sym);
 		int exprType = Types.noType;
 		Expect(lparen_Sym);

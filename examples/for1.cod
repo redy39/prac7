@@ -33,7 +33,7 @@ BEGIN
   {   51 } LDC      300
   {   53 } STO     
   {   54 } JAL      58
-  {   56 } BRN      78
+  {   56 } BRN      83
   {   58 } LDA      4
   {   60 } LDV     
   {   61 } LDC      5
@@ -41,30 +41,33 @@ BEGIN
   {   64 } LDC      0
   {   66 } CEQ     
   {   67 } BZE      73
-  {   69 } BRN      78
+  {   69 } BRN      83
   {   71 } BRN      73
   {   73 } LDA      4
-  {   75 } LDV     
-  {   76 } PRNI    
-  {   77 } JTOS    
-  {   78 } LDA      5
-  {   80 } LDC      1
-  {   82 } STO     
-  {   83 } JAL      104
-  {   85 } LDA      5
-  {   87 } LDC      0
-  {   89 } STO     
-  {   90 } JAL      104
-  {   92 } LDA      5
-  {   94 } LDC      3
-  {   96 } LDC      4
-  {   98 } CGT     
-  {   99 } STO     
-  {  100 } JAL      104
-  {  102 } BRN      109
-  {  104 } LDA      5
-  {  106 } LDV     
-  {  107 } PRNB    
-  {  108 } JTOS    
-  {  109 } RETV    
+  {   75 } LDC      10
+  {   77 } STO     
+  {   78 } LDA      4
+  {   80 } LDV     
+  {   81 } PRNI    
+  {   82 } JTOS    
+  {   83 } LDA      5
+  {   85 } LDC      1
+  {   87 } STO     
+  {   88 } JAL      109
+  {   90 } LDA      5
+  {   92 } LDC      0
+  {   94 } STO     
+  {   95 } JAL      109
+  {   97 } LDA      5
+  {   99 } LDC      3
+  {  101 } LDC      4
+  {  103 } CGT     
+  {  104 } STO     
+  {  105 } JAL      109
+  {  107 } BRN      114
+  {  109 } LDA      5
+  {  111 } LDV     
+  {  112 } PRNB    
+  {  113 } JTOS    
+  {  114 } RETV    
 END.

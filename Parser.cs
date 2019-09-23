@@ -1054,6 +1054,12 @@ public class Parser {
 			    }
 			    type = IsChar(type) && IsChar(type2) ? Types.charType : Types.intType;
 			    CodeGen.BinaryOp(op);
+			    if (IsChar(type)) {
+			      // wrap around for charType
+			      CodeGen.LoadConstant(PVM.maxChar);
+			      CodeGen.BinaryOp(CodeGen.add);
+			      CodeGen.LoadConstant(PVM.maxChar);
+			      CodeGen.BinaryOp(CodeGen.rem); }
 			    break;
 			  default:
 			    if((!IsArith(type) && !IsChar(type))
